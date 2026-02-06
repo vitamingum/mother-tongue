@@ -9,10 +9,12 @@ import re
 import time
 import random
 import unicodedata
+from pathlib import Path
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass, asdict
-from typing import List, Dict, Tuple
+from typing import List, Dict, Tuple, Optional
 import google.generativeai as genai
+from tqdm import tqdm
 
 
 # ============================================================================
@@ -31,28 +33,56 @@ SCORE_THRESHOLD = 7
 FINAL_COUNT = 64
 FREE_TIER_RPD = 1500  # requests per day
 SLEEP_BETWEEN_REQUESTS = 4  # seconds (for free tier)
+PAID_TIER_SLEEP = 0.1  # seconds (if using paid tier)
 
-# TODO: User to provide actual Unicode ranges
-# Format: list of (start, end) tuples
-UNICODE_RANGES = [
-    (0x0000, 0x6400),  # PLACEHOLDER - user will provide actual ranges
-]
+# Prompts loaded from files
+PROMPT_DIR = Path("prompts")
+PROMPT1_FILE = PROMPT_DIR / "turn1.txt"
+PROMPT2_FILE = PROMPT_DIR / "turn2.txt"
+RANGES_FILE = PROMPT_DIR / "unicode_ranges.json"
 
-# TODO: User to provide actual prompts
-PROMPT1 = """
-TODO: User prompt for turn 1
-Should include {glyphs} placeholder for formatting
-Example:
-Rate the visual complexity of these glyphs from 0-10:
-{glyphs}
-"""
 
-PROMPT2 = """
-TODO: User prompt for turn 2
-Should request output in format: <glyph> <score>
-Example:
-Now provide scores in format: <glyph> <score> (one per line)
-"""
+# ============================================================================
+# CONFIGURATION LOADERS
+# ============================================================================
+
+def load_prompts() -> Tuple[str, str]:
+    """Load prompts from files."""
+    if not PROMPT1_FILE.exists():
+        raise FileNotFoundError(
+            f"Prompt file not found: {PROMPT1_FILE}\n"
+            f"Create prompts/ directory with turn1.txt and turn2.txt\n"
+            f"turn1.txt should include {{glyphs}} placeholder"
+        )
+    if not PROMPT2_FILE.exists():
+        raise FileNotFoundError(f"Prompt file not found: {PROMPT2_FILE}")
+    
+    with open(PROMPT1_FILE, 'r', encoding='utf-8') as f:
+        prompt1 = f.read().strip()
+    with open(PROMPT2_FILE, 'r', encoding='utf-8') as f:
+        prompt2 = f.read().strip()
+    
+    if '{glyphs}' not in prompt1:
+        raise ValueError(f"{PROMPT1_FILE} must contain {{glyphs}} placeholder")
+    
+    return prompt1, prompt2
+
+
+def load_unicode_ranges() -> List[Tuple[int, int]]:
+    """Load Unicode ranges from JSON file."""
+    if not RANGES_FILE.exists():
+        raise FileNotFoundError(
+            f"Unicode ranges file not found: {RANGES_FILE}\n"
+            f"Create {RANGES_FILE} with format: [[start, end], ...]\n"
+            f"Example: [[0, 25600], [0x4E00, 0x9FFF]]"
+        )
+    
+    with open(RANGES_FILE, 'r', encoding='utf-8') as f:
+        ranges_data = json.load(f)
+    
+    # Convert to list of tuples
+    ranges = [(r[0], r[1]) for r in ranges_data]
+    return ranges
 
 
 # ============================================================================
@@ -96,7 +126,7 @@ def generate_all_glyphs(ranges: List[Tuple[int, int]]) -> List[str]:
 # API INTERACTION
 # ============================================================================
 
-def score_chunk_with_conversation(chunk: List[str], chunk_id: int, round_num: int) -> ChunkResult:
+def score_chunk_with_conversation(chunk: List[str], chunk_id: int, round_num: int, prompt1: str, prompt2: str) -> ChunkResult:
     """
     Score a chunk of glyphs using a 2-turn conversation with Gemini.
     
@@ -113,7 +143,7 @@ def score_chunk_with_conversation(chunk: List[str], chunk_id: int, round_num: in
     
     # Turn 1: Send glyphs
     glyphs_text = "\n".join(chunk)
-    prompt1_formatted = PROMPT1.format(glyphs=glyphs_text)
+    prompt1_formatted = prompt1.format(glyphs=glyphs_text)
     
     retry_count = 0
     max_retries = 5
@@ -127,7 +157,7 @@ def score_chunk_with_conversation(chunk: List[str], chunk_id: int, round_num: in
             time.sleep(SLEEP_BETWEEN_REQUESTS)
             
             # Turn 2: Request scores (continues same conversation)
-            response2 = chat.send_message(PROMPT2)
+            response2 = chat.send_message(prompt2)
             response2_text = response2.text
             
             # Parse scores from response2
@@ -213,36 +243,88 @@ def parse_scores(response: str, expected_glyphs: List[str]) -> Dict[str, int]:
 # ROUND PROCESSING
 # ============================================================================
 
-def score_round(glyphs: List[str], round_num: int) -> str:
+def check_existing_round(round_num: int) -> Optional[str]:
+    """Check if round results already exist."""
+    output_file = f"data/round_{round_num}.jsonl"
+    if os.path.exists(output_file):
+        return output_file
+    return None
+
+
+def estimate_round_cost(num_glyphs: int, chunk_size: int = CHUNK_SIZE) -> Dict:
+    """Estimate cost and time for a round."""
+    num_chunks = (num_glyphs + chunk_size - 1) // chunk_size
+    num_requests = num_chunks * 2
+    
+    # Rough estimates (adjust based on actual prompt sizes)
+    tokens_per_turn1 = 500 + (chunk_size * 5)  # prompt + glyphs
+    tokens_per_turn2 = 100 + (chunk_size * 3)  # prompt + response
+    total_input_tokens = num_chunks * (tokens_per_turn1 + tokens_per_turn2)
+    total_output_tokens = num_chunks * (chunk_size * 3)  # ~3 tokens per scored glyph
+    
+    # Free tier timing
+    free_tier_minutes = (num_requests * SLEEP_BETWEEN_REQUESTS) / 60
+    
+    # Paid tier cost (gemini-2.5-flash-lite rates)
+    cost_input = (total_input_tokens / 1_000_000) * 0.10
+    cost_output = (total_output_tokens / 1_000_000) * 0.40
+    total_cost = cost_input + cost_output
+    
+    return {
+        'chunks': num_chunks,
+        'requests': num_requests,
+        'estimated_minutes': free_tier_minutes,
+        'estimated_cost_usd': total_cost,
+        'exceeds_free_tier': num_requests > FREE_TIER_RPD
+    }
+
+
+def score_round(glyphs: List[str], round_num: int, prompt1: str, prompt2: str, resume: bool = True) -> str:
     """
     Score all glyphs in a round using parallel API calls.
     
     Args:
         glyphs: List of glyphs to score
         round_num: Current round number
+        prompt1: First turn prompt template
+        prompt2: Second turn prompt
+        resume: Whether to skip if results already exist
     
     Returns:
         Path to the output JSONL file
     """
+    output_file = f"data/round_{round_num}.jsonl"
+    
+    # Check for existing results
+    if resume and os.path.exists(output_file):
+        print(f"\n✓ Round {round_num} results already exist: {output_file}")
+        response = input(f"Resume from existing? [Y/n]: ").strip().lower()
+        if response != 'n':
+            return output_file
+    
     # Chunk glyphs
     chunks = [glyphs[i:i+CHUNK_SIZE] for i in range(0, len(glyphs), CHUNK_SIZE)]
     total_chunks = len(chunks)
-    total_requests = total_chunks * 2  # 2 turns per chunk
+    
+    # Cost/time estimation
+    estimate = estimate_round_cost(len(glyphs))
     
     print(f"\n{'='*60}")
     print(f"ROUND {round_num}")
     print(f"{'='*60}")
-    print(f"Glyphs: {len(glyphs)}")
-    print(f"Chunks: {total_chunks} (size={CHUNK_SIZE})")
-    print(f"API requests: {total_requests} (2 turns per chunk)")
-    print(f"Estimated time: ~{total_requests * SLEEP_BETWEEN_REQUESTS / 60:.1f} minutes")
+    print(f"Glyphs: {len(glyphs):,}")
+    print(f"Chunks: {estimate['chunks']} (size={CHUNK_SIZE})")
+    print(f"API requests: {estimate['requests']} (2 turns per chunk)")
+    print(f"Estimated time: ~{estimate['estimated_minutes']:.1f} minutes (free tier)")
+    print(f"Estimated cost: ${estimate['estimated_cost_usd']:.2f} (paid tier)")
     
-    # Check if we'll hit rate limit
-    if total_requests > FREE_TIER_RPD:
-        print(f"⚠️  WARNING: {total_requests} requests exceeds free tier limit of {FREE_TIER_RPD} RPD")
+    if estimate['exceeds_free_tier']:
+        print(f"\n⚠️  WARNING: {estimate['requests']} requests exceeds free tier limit of {FREE_TIER_RPD} RPD")
         print(f"   Consider splitting into multiple days or using paid tier")
-    
-    output_file = f"data/round_{round_num}.jsonl"
+        response = input(f"\nContinue anyway? [y/N]: ").strip().lower()
+        if response != 'y':
+            print("Aborted.")
+            exit(0)
     
     # Process chunks in parallel
     max_workers = min(10, max(1, FREE_TIER_RPD // (2 * total_chunks)))
@@ -250,21 +332,21 @@ def score_round(glyphs: List[str], round_num: int) -> str:
     results = []
     with ThreadPoolExecutor(max_workers=max_workers) as executor:
         futures = {
-            executor.submit(score_chunk_with_conversation, chunk, idx, round_num): idx
+            executor.submit(score_chunk_with_conversation, chunk, idx, round_num, prompt1, prompt2): idx
             for idx, chunk in enumerate(chunks)
         }
         
-        completed = 0
-        for future in as_completed(futures):
-            chunk_id = futures[future]
-            try:
-                result = future.result()
-                results.append(result)
-                completed += 1
-                print(f"✓ Chunk {completed}/{total_chunks} complete (chunk_id={chunk_id}, scores={len(result.scores)})")
-            except Exception as e:
-                print(f"❌ Chunk {chunk_id} failed: {e}")
-                completed += 1
+        with tqdm(total=total_chunks, desc=f"Round {round_num}", unit="chunk") as pbar:
+            for future in as_completed(futures):
+                chunk_id = futures[future]
+                try:
+                    result = future.result()
+                    results.append(result)
+                    pbar.set_postfix({"scores": len(result.scores), "chunk": chunk_id})
+                    pbar.update(1)
+                except Exception as e:
+                    pbar.write(f"❌ Chunk {chunk_id} failed: {e}")
+                    pbar.update(1)
     
     # Write results to JSONL
     with open(output_file, 'w', encoding='utf-8') as f:
@@ -306,12 +388,47 @@ def harvest(round_num: int) -> List[str]:
 # MAIN ORCHESTRATION
 # ============================================================================
 
+def validate_configuration():
+    """Validate that all required configuration is present."""
+    errors = []
+    
+    # Check API key
+    if not API_KEY:
+        errors.append("GEMINI_API_KEY environment variable not set")
+    
+    # Check prompt files
+    if not PROMPT_DIR.exists():
+        errors.append(f"Prompts directory not found: {PROMPT_DIR}")
+    if not PROMPT1_FILE.exists():
+        errors.append(f"Prompt file not found: {PROMPT1_FILE}")
+    if not PROMPT2_FILE.exists():
+        errors.append(f"Prompt file not found: {PROMPT2_FILE}")
+    
+    # Check ranges file
+    if not RANGES_FILE.exists():
+        errors.append(f"Unicode ranges file not found: {RANGES_FILE}")
+    
+    if errors:
+        print("❌ Configuration errors:")
+        for error in errors:
+            print(f"   • {error}")
+        print("\n📖 Setup instructions:")
+        print("   1. Set GEMINI_API_KEY environment variable")
+        print("   2. Create prompts/ directory")
+        print("   3. Create prompts/turn1.txt (include {glyphs} placeholder)")
+        print("   4. Create prompts/turn2.txt")
+        print("   5. Create prompts/unicode_ranges.json (format: [[start, end], ...])")
+        exit(1)
+
+
 def main():
     """
     Main orchestration loop:
-    1. Generate all glyphs from Unicode ranges
-    2. Run rounds of scoring until we have <= FINAL_COUNT glyphs
-    3. Save final glyphs
+    1. Validate configuration
+    2. Load prompts and Unicode ranges
+    3. Generate all glyphs from Unicode ranges
+    4. Run rounds of scoring until we have <= FINAL_COUNT glyphs
+    5. Save final glyphs
     """
     print("🎨 Glyph Scorer - Multi-round selection system")
     print(f"Model: {MODEL_NAME}")
@@ -319,16 +436,38 @@ def main():
     print(f"Score threshold: {SCORE_THRESHOLD}")
     print(f"Target final count: {FINAL_COUNT}")
     
+    # Validate configuration
+    print("\n📋 Validating configuration...")
+    validate_configuration()
+    print("✓ Configuration valid")
+    
+    # Load prompts and ranges
+    print("\n📝 Loading prompts...")
+    prompt1, prompt2 = load_prompts()
+    print(f"✓ Loaded prompts from {PROMPT_DIR}")
+    
+    print("\n🔢 Loading Unicode ranges...")
+    unicode_ranges = load_unicode_ranges()
+    print(f"✓ Loaded {len(unicode_ranges)} range(s)")
+    
     # Generate initial glyph set
     print("\n🔤 Generating glyphs from Unicode ranges...")
-    glyphs = generate_all_glyphs(UNICODE_RANGES)
-    print(f"✓ Generated {len(glyphs)} glyphs")
+    glyphs = generate_all_glyphs(unicode_ranges)
+    print(f"✓ Generated {len(glyphs):,} glyphs")
     
+    # Determine starting round
     round_num = 1
+    while check_existing_round(round_num):
+        print(f"✓ Found existing round_{round_num}.jsonl")
+        round_num += 1
+    
+    if round_num > 1:
+        print(f"\n🔄 Resuming from round {round_num}")
+        glyphs = harvest(round_num - 1)
     
     # Multi-round scoring
     while len(glyphs) > FINAL_COUNT:
-        score_round(glyphs, round_num)
+        score_round(glyphs, round_num, prompt1, prompt2)
         glyphs = harvest(round_num)
         
         if len(glyphs) == 0:

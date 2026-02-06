@@ -20,20 +20,12 @@ Multi-round Unicode glyph scoring system using Google Gemini API.
    ```bash
    # Set environment variable
    $env:GEMINI_API_KEY="your_api_key_here"
-   
-   # Or create .env file (copy from .env.example)
    ```
 
-3. **Configure Unicode ranges** in `glyph_scorer.py`:
-   ```python
-   UNICODE_RANGES = [
-       (0x0000, 0x6400),  # Replace with actual ranges
-   ]
-   ```
-
-4. **Configure prompts** in `glyph_scorer.py`:
-   - `PROMPT1`: First turn prompt (include `{glyphs}` placeholder)
-   - `PROMPT2`: Second turn prompt requesting scores in format: `<glyph> <score>`
+3. **Configure prompts** in `prompts/` directory:
+   - Edit `prompts/turn1.txt` - First turn prompt (must include `{glyphs}` placeholder)
+   - Edit `prompts/turn2.txt` - Second turn prompt requesting format: `<glyph> <score>`
+   - Edit `prompts/unicode_ranges.json` - Unicode ranges as JSON array: `[[start, end], ...]`
 
 ## Usage
 
@@ -41,7 +33,24 @@ Multi-round Unicode glyph scoring system using Google Gemini API.
 python glyph_scorer.py
 ```
 
-## Configuration Options
+The script will:
+- Validate configuration (prompts, ranges, API key)
+- Estimate cost and time for each round
+- Show progress with tqdm progress bars
+- Ask before proceeding if rate limits will be exceeded
+- Automatically resume from existing rounds if interrupted
+
+## Configuration Optionsfree tier)
+- `PAID_TIER_SLEEP = 0.1` - Delay for paid tier
+
+## Features
+
+- **Configuration validation**: Checks prompts, ranges, and API key before starting
+- **Cost estimation**: Shows estimated API cost and time before each round
+- **Checkpoint/resume**: Automatically resumes from existing rounds if interrupted
+- **Progress tracking**: Real-time progress bars with tqdm
+- **Rate limit handling**: Warns when exceeding free tier limits, exponential backoff on 429 errors
+- **Prompt files**: Clean separation of prompts from code
 
 Edit constants in `glyph_scorer.py`:
 
