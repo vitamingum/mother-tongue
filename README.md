@@ -20,8 +20,11 @@ Multi-round Unicode glyph scoring system using Google Gemini API.
    ```
 
 2. **Configure API key**:
+   
+   Copy `.env.example` to `.env` and add your Google API key:
    ```bash
-   $env:GEMINI_API_KEY="your_api_key_here"
+   # .env file
+   GOOGLE_API_KEY=your_actual_api_key_here
    ```
 
 3. **Tier mode** (PAID TIER is default):

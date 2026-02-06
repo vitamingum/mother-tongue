@@ -17,14 +17,12 @@ from typing import List, Dict, Tuple, Optional
 import google.generativeai as genai
 from tqdm import tqdm
 
+# Load config (API key from .env)
+from config import API_KEY
 
 # ============================================================================
 # CONFIGURATION
 # ============================================================================
-
-API_KEY = os.getenv("GEMINI_API_KEY")
-if not API_KEY:
-    raise ValueError("Set GEMINI_API_KEY environment variable")
 
 genai.configure(api_key=API_KEY)
 
@@ -537,10 +535,6 @@ def validate_configuration(strategy: str):
     """Validate that all required configuration is present."""
     errors = []
     
-    # Check API key
-    if not API_KEY:
-        errors.append("GEMINI_API_KEY environment variable not set")
-    
     # Check strategy
     if strategy not in AVAILABLE_STRATEGIES:
         errors.append(
@@ -571,9 +565,9 @@ def validate_configuration(strategy: str):
         for strat in AVAILABLE_STRATEGIES:
             print(f"   • {strat}")
         print("\n📖 Setup instructions:")
-        print("   1. Set GEMINI_API_KEY environment variable")
+        print("   1. Copy .env.example to .env and add your GOOGLE_API_KEY")
         print("   2. Prompts exist at prompts/<strategy>/turn1.txt and turn2.txt")
-        print("   3. Create prompts/unicode_ranges.json (format: [[start, end], ...])")
+        print("   3. Unicode ranges pre-configured in prompts/unicode_ranges.json")
         print(f"   4. Run with: python glyph_scorer.py [strategy]")
         exit(1)
 
