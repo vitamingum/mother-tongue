@@ -33,8 +33,15 @@ CHUNK_SIZE = 64
 SCORE_THRESHOLD = 7
 FINAL_COUNT = 64
 FREE_TIER_RPD = 1500  # requests per day
-SLEEP_BETWEEN_REQUESTS = 4  # seconds (for free tier)
-PAID_TIER_SLEEP = 0.1  # seconds (if using paid tier)
+FREE_TIER_SLEEP = 4  # seconds between requests
+PAID_TIER_SLEEP = 0.1  # seconds between requests
+
+# Paid tier mode (set via environment variable)
+USE_PAID_TIER = os.getenv("GEMINI_PAID_TIER", "false").lower() == "true"
+SLEEP_BETWEEN_REQUESTS = PAID_TIER_SLEEP if USE_PAID_TIER else FREE_TIER_SLEEP
+
+# Daily quota tracking
+QUOTA_TRACKING_FILE = "data/quota_tracking.json"
 
 # Available prompt strategies
 AVAILABLE_STRATEGIES = ["complexity", "aesthetic", "uniqueness"]
@@ -109,6 +116,56 @@ class ChunkResult:
     scores: Dict[str, int]
     response1: str
     response2: str
+
+
+@dataclass
+class QuotaTracker:
+    date: str
+    requests_used: int
+    requests_limit: int
+    
+    def to_dict(self):
+        return asdict(self)
+    
+    @classmethod
+    def load(cls) -> 'QuotaTracker':
+        """Load quota tracking from file."""
+        today = time.strftime("%Y-%m-%d")
+        
+        if not os.path.exists(QUOTA_TRACKING_FILE):
+            return cls(date=today, requests_used=0, requests_limit=FREE_TIER_RPD)
+        
+        with open(QUOTA_TRACKING_FILE, 'r') as f:
+            data = json.load(f)
+        
+        # Reset if it's a new day
+        if data.get('date') != today:
+            return cls(date=today, requests_used=0, requests_limit=FREE_TIER_RPD)
+        
+        return cls(**data)
+    
+    def save(self):
+        """Save quota tracking to file."""
+        os.makedirs("data", exist_ok=True)
+        with open(QUOTA_TRACKING_FILE, 'w') as f:
+            json.dump(self.to_dict(), f, indent=2)
+    
+    def add_requests(self, count: int):
+        """Add completed requests to tracker."""
+        self.requests_used += count
+        self.save()
+    
+    def can_make_requests(self, count: int) -> bool:
+        """Check if we can make this many requests today."""
+        if USE_PAID_TIER:
+            return True
+        return (self.requests_used + count) <= self.requests_limit
+    
+    def remaining_today(self) -> int:
+        """Get remaining requests for today."""
+        if USE_PAID_TIER:
+            return 999999
+        return max(0, self.requests_limit - self.requests_used)
 
 
 # ============================================================================
@@ -263,7 +320,7 @@ def check_existing_round(round_num: int) -> Optional[str]:
     return None
 
 
-def estimate_round_cost(num_glyphs: int, chunk_size: int = CHUNK_SIZE) -> Dict:
+def estimate_round_cost(num_glyphs: int, chunk_size: int = CHUNK_SIZE, quota: Optional[QuotaTracker] = None) -> Dict:
     """Estimate cost and time for a round."""
     num_chunks = (num_glyphs + chunk_size - 1) // chunk_size
     num_requests = num_chunks * 2
@@ -274,24 +331,38 @@ def estimate_round_cost(num_glyphs: int, chunk_size: int = CHUNK_SIZE) -> Dict:
     total_input_tokens = num_chunks * (tokens_per_turn1 + tokens_per_turn2)
     total_output_tokens = num_chunks * (chunk_size * 3)  # ~3 tokens per scored glyph
     
-    # Free tier timing
-    free_tier_minutes = (num_requests * SLEEP_BETWEEN_REQUESTS) / 60
+    # Timing estimation
+    estimated_minutes = (num_requests * SLEEP_BETWEEN_REQUESTS) / 60
     
-    # Paid tier cost (gemini-2.5-flash-lite rates)
-    cost_input = (total_input_tokens / 1_000_000) * 0.10
-    cost_output = (total_output_tokens / 1_000_000) * 0.40
+    # Paid tier cost (gemini-3-flash-preview rates: $0.075 per 1M input, $0.30 per 1M output)
+    cost_input = (total_input_tokens / 1_000_000) * 0.075
+    cost_output = (total_output_tokens / 1_000_000) * 0.30
     total_cost = cost_input + cost_output
+    
+    # Multi-day calculation for free tier
+    if quota:
+        remaining_today = quota.remaining_today()
+        can_finish_today = num_requests <= remaining_today
+        days_needed = (num_requests + FREE_TIER_RPD - 1) // FREE_TIER_RPD if not USE_PAID_TIER else 1
+    else:
+        remaining_today = FREE_TIER_RPD
+        can_finish_today = num_requests <= FREE_TIER_RPD
+        days_needed = (num_requests + FREE_TIER_RPD - 1) // FREE_TIER_RPD if not USE_PAID_TIER else 1
     
     return {
         'chunks': num_chunks,
         'requests': num_requests,
-        'estimated_minutes': free_tier_minutes,
+        'estimated_minutes': estimated_minutes,
+        'estimated_hours': estimated_minutes / 60,
         'estimated_cost_usd': total_cost,
-        'exceeds_free_tier': num_requests > FREE_TIER_RPD
+        'exceeds_free_tier': num_requests > FREE_TIER_RPD,
+        'remaining_today': remaining_today,
+        'can_finish_today': can_finish_today,
+        'days_needed': days_needed
     }
 
 
-def score_round(glyphs: List[str], round_num: int, prompt1: str, prompt2: str, resume: bool = True) -> str:
+def score_round(glyphs: List[str], round_num: int, prompt1: str, prompt2: str, resume: bool = True, quota: Optional[QuotaTracker] = None) -> str:
     """
     Score all glyphs in a round using parallel API calls.
     
@@ -314,59 +385,121 @@ def score_round(glyphs: List[str], round_num: int, prompt1: str, prompt2: str, r
         if response != 'n':
             return output_file
     
+    # Initialize quota tracker
+    if quota is None:
+        quota = QuotaTracker.load()
+    
     # Chunk glyphs
     chunks = [glyphs[i:i+CHUNK_SIZE] for i in range(0, len(glyphs), CHUNK_SIZE)]
     total_chunks = len(chunks)
     
     # Cost/time estimation
-    estimate = estimate_round_cost(len(glyphs))
+    estimate = estimate_round_cost(len(glyphs), quota=quota)
     
     print(f"\n{'='*60}")
     print(f"ROUND {round_num}")
     print(f"{'='*60}")
     print(f"Glyphs: {len(glyphs):,}")
-    print(f"Chunks: {estimate['chunks']} (size={CHUNK_SIZE})")
-    print(f"API requests: {estimate['requests']} (2 turns per chunk)")
-    print(f"Estimated time: ~{estimate['estimated_minutes']:.1f} minutes (free tier)")
-    print(f"Estimated cost: ${estimate['estimated_cost_usd']:.2f} (paid tier)")
+    print(f"Chunks: {estimate['chunks']:,} (size={CHUNK_SIZE})")
+    print(f"API requests: {estimate['requests']:,} (2 turns per chunk)")
     
-    if estimate['exceeds_free_tier']:
-        print(f"\n⚠️  WARNING: {estimate['requests']} requests exceeds free tier limit of {FREE_TIER_RPD} RPD")
-        print(f"   Consider splitting into multiple days or using paid tier")
-        response = input(f"\nContinue anyway? [y/N]: ").strip().lower()
-        if response != 'y':
-            print("Aborted.")
-            exit(0)
+    if USE_PAID_TIER:
+        print(f"\n💳 PAID TIER MODE")
+        print(f"Estimated time: ~{estimate['estimated_minutes']:.1f} minutes ({estimate['estimated_hours']:.2f} hours)")
+        print(f"Estimated cost: ${estimate['estimated_cost_usd']:.2f}")
+    else:
+        print(f"\n🆓 FREE TIER MODE")
+        print(f"Daily limit: {FREE_TIER_RPD} requests/day")
+        print(f"Used today: {quota.requests_used}")
+        print(f"Remaining today: {estimate['remaining_today']}")
+        print(f"Estimated days needed: {estimate['days_needed']}")
+        print(f"Estimated time: ~{estimate['estimated_minutes']:.1f} minutes per batch")
+        
+        if not estimate['can_finish_today']:
+            requests_today = min(estimate['requests'], estimate['remaining_today'])
+            print(f"\n⚠️  Will process {requests_today} requests today, resume tomorrow for remaining")
+            response = input(f"\nContinue with multi-day batching? [Y/n]: ").strip().lower()
+            if response == 'n':
+                print("\n💡 Tip: Set GEMINI_PAID_TIER=true to process all at once")
+                print("Aborted.")
+                exit(0)
+    
+    # Determine how many chunks we can process today
+    if USE_PAID_TIER:
+        chunks_to_process = chunks
+        start_chunk_idx = 0
+    else:
+        max_requests_today = quota.remaining_today()
+        max_chunks_today = max_requests_today // 2  # 2 turns per chunk
+        
+        # Check for existing progress
+        existing_chunks = 0
+        if os.path.exists(output_file):
+            with open(output_file, 'r', encoding='utf-8') as f:
+                existing_chunks = sum(1 for _ in f)
+        
+        start_chunk_idx = existing_chunks
+        end_chunk_idx = min(start_chunk_idx + max_chunks_today, total_chunks)
+        chunks_to_process = chunks[start_chunk_idx:end_chunk_idx]
+        
+        if start_chunk_idx > 0:
+            print(f"\n🔄 Resuming from chunk {start_chunk_idx} of {total_chunks}")
+        
+        if end_chunk_idx < total_chunks:
+            print(f"\n📊 Processing chunks {start_chunk_idx} to {end_chunk_idx-1} (of {total_chunks})")
+            print(f"   Remaining for tomorrow: {total_chunks - end_chunk_idx} chunks")
+    
+    if not chunks_to_process:
+        print(f"\n✓ Round {round_num} already complete or no quota remaining today")
+        return output_file
     
     # Process chunks in parallel
-    max_workers = min(10, max(1, FREE_TIER_RPD // (2 * total_chunks)))
+    max_workers = min(10, max(1, len(chunks_to_process) // 10)) if USE_PAID_TIER else 5
     
     results = []
+    requests_made = 0
+    
     with ThreadPoolExecutor(max_workers=max_workers) as executor:
         futures = {
-            executor.submit(score_chunk_with_conversation, chunk, idx, round_num, prompt1, prompt2): idx
-            for idx, chunk in enumerate(chunks)
+            executor.submit(score_chunk_with_conversation, chunk, start_chunk_idx + idx, round_num, prompt1, prompt2): idx
+            for idx, chunk in enumerate(chunks_to_process)
         }
         
-        with tqdm(total=total_chunks, desc=f"Round {round_num}", unit="chunk") as pbar:
+        with tqdm(total=len(chunks_to_process), desc=f"Round {round_num}", unit="chunk") as pbar:
             for future in as_completed(futures):
                 chunk_id = futures[future]
                 try:
                     result = future.result()
                     results.append(result)
-                    pbar.set_postfix({"scores": len(result.scores), "chunk": chunk_id})
+                    requests_made += 2  # 2 turns per chunk
+                    pbar.set_postfix({"scores": len(result.scores), "chunk": start_chunk_idx + chunk_id})
                     pbar.update(1)
                 except Exception as e:
-                    pbar.write(f"❌ Chunk {chunk_id} failed: {e}")
+                    pbar.write(f"❌ Chunk {start_chunk_idx + chunk_id} failed: {e}")
                     pbar.update(1)
     
-    # Write results to JSONL
-    with open(output_file, 'w', encoding='utf-8') as f:
+    # Update quota tracker
+    quota.add_requests(requests_made)
+    
+    # Append results to JSONL (for multi-day resume)
+    mode = 'a' if start_chunk_idx > 0 else 'w'
+    with open(output_file, mode, encoding='utf-8') as f:
         for result in results:
             f.write(json.dumps(asdict(result), ensure_ascii=False) + '\n')
     
-    print(f"\n✓ Round {round_num} complete. Results saved to {output_file}")
-    return output_file
+    # Check if round is complete
+    with open(output_file, 'r', encoding='utf-8') as f:
+        completed_chunks = sum(1 for _ in f)
+    
+    if completed_chunks < total_chunks:
+        print(f"\n⏸️  Round {round_num} partially complete: {completed_chunks}/{total_chunks} chunks")
+        print(f"   Results saved to {output_file}")
+        print(f"   Run again tomorrow to continue (daily quota will reset)")
+        print(f"\n💡 Tip: Set GEMINI_PAID_TIER=true to finish in one run")
+        exit(0)
+    else:
+        print(f"\n✓ Round {round_num} complete! Results saved to {output_file}")
+        return output_file
 
 
 def harvest(round_num: int) -> List[str]:
@@ -462,6 +595,7 @@ def main():
     print("🎨 Glyph Scorer - Multi-round selection system")
     print(f"Strategy: {strategy}")
     print(f"Model: {MODEL_NAME}")
+    print(f"Tier: {'PAID 💳' if USE_PAID_TIER else 'FREE 🆓'}")
     print(f"Chunk size: {CHUNK_SIZE}")
     print(f"Score threshold: {SCORE_THRESHOLD}")
     print(f"Target final count: {FINAL_COUNT}")
@@ -480,10 +614,26 @@ def main():
     unicode_ranges = load_unicode_ranges()
     print(f"✓ Loaded {len(unicode_ranges)} range(s)")
     
+    # Load quota tracker
+    quota = QuotaTracker.load()
+    print(f"\n📊 Quota status: {quota.requests_used}/{quota.requests_limit} requests used today")
+    
     # Generate initial glyph set
     print("\n🔤 Generating glyphs from Unicode ranges...")
     glyphs = generate_all_glyphs(unicode_ranges)
     print(f"✓ Generated {len(glyphs):,} glyphs")
+    
+    # Upfront cost estimation for full run
+    total_estimate = estimate_round_cost(len(glyphs), quota=quota)
+    print(f"\n💰 Full R1 Estimate:")
+    print(f"   Chunks: {total_estimate['chunks']:,}")
+    print(f"   Requests: {total_estimate['requests']:,}")
+    if USE_PAID_TIER:
+        print(f"   Cost: ${total_estimate['estimated_cost_usd']:.2f}")
+        print(f"   Time: ~{total_estimate['estimated_hours']:.1f} hours")
+    else:
+        print(f"   Days needed: {total_estimate['days_needed']}")
+        print(f"   Time per day: ~{total_estimate['estimated_minutes']:.0f} minutes")
     
     # Determine starting round
     round_num = 1
@@ -497,7 +647,7 @@ def main():
     
     # Multi-round scoring
     while len(glyphs) > FINAL_COUNT:
-        score_round(glyphs, round_num, prompt1, prompt2)
+        score_round(glyphs, round_num, prompt1, prompt2, quota=quota)
         glyphs = harvest(round_num)
         
         if len(glyphs) == 0:

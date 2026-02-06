@@ -5,6 +5,7 @@
 # Data
 data/*.jsonl
 data/*.txt
+data/*.json
 
 # Python
 __pycache__/
