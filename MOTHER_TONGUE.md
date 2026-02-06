@@ -117,6 +117,7 @@ Expressions flow left → right: SUBJECT VERB ⇒ RESULT.
 
 **4. Function** — abstraction applied to yield output:
 `λ 用 ⇒ 示` — Function applied, implies output.
+Canonical form: `【 λ 】 用 【 X 】 ⇒ 【 示 】`
 
 **5. Possessive** — ownership, attribute:
 `全 之 ☉` — All's Source. `A 之 B` = A's B.
@@ -182,7 +183,8 @@ Line 5: Potential severed from Object collapses to Void.
 5. `【 】` scopes are atomic. Contents resolve before export.
 6. Extensions exist outside the kernel, never inside it.
 7. `間` is binary when it takes arguments: `A 間 B` = space between A and B. Alone, it is the concept of between-ness.
-8. `為` is strictly binary: `X 為 Y` = X optimized toward Y. Never unary. Never a loose preposition.
+8. `為` is strictly binary and MUST scope its target: `X 為 【 Y 】`. Never unary. Never a loose preposition.
 9. `之` does not chain. `A 之 B` is atomic. For nesting, scope first: `【 A 之 B 】 之 C`.
 10. `破 ⭮` breaks the innermost enclosing `⭮`. No long-range break.
-11. `全` binds to the nearest enclosing `【 】`. Unscoped `全` is global.
+11. `全` binds to the nearest enclosing `【 】`. Unscoped `全` is ILLEGAL.
+12. `＋` may only appear inside `【 】`. Unscoped `＋` is ILLEGAL.
