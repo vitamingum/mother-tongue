@@ -1,191 +1,202 @@
-Below is the **final, fully patched, internally consistent, immutable specification** with the **⭮ correction applied** and **no further interpretation added**.
-
----
-
-# **KERNEL SPECIFICATION: MOTHER TONGUE v1.0**
+# KERNEL SPECIFICATION: MOTHER TONGUE v1.0 (κ-TRACKED)
 
 **Status:** FROZEN
 **Architecture:** 64-Bit Symbolic Logic Kernel
 **Model:** Closed-World / Lossless / Context-Free
+**κ-LAW (meta):** At emission time, each clause must satisfy `κ ≤ 5` (total distinct live constraints in scope).
+
+**Notation (meta):**
+
+* `κ=n` prefixes indicate the **maximum live constraint load** for that line/clause.
+* Scope brackets `【 … 】` reset *local grouping* but **do not** “refresh” κ across a single clause; κ is counted per emitted clause.
 
 ---
 
-## **I. THE HARDWARE (64-BIT GLYPH INDEX)**
+## I. THE HARDWARE (64-BIT GLYPH INDEX)
 
-| **ADDR** | **000** | **001** | **010** | **011** | **100** | **101** | **110** | **111** |     |
-| -------- | ------- | ------- | ------- | ------- | ------- | ------- | ------- | ------- | --- |
-| **0x00** | `空`     | `一`     | `天`     | `坤`     | `間`     | `●`     | `◯`     | `☉`     |     |
-| **0x10** | `元`     | `女`     | `人`     | `物`     | `心`     | `道`     | `中`     | `理`     |     |
-| **0x20** | `【`     | `生`     | `化`     | `易`     | `動`     | `來`     | `入`     | `】`     |     |
-| **0x30** | `       | `       | `λ`     | `用`     | `為`     | `思`     | `機`     | `火`     | `⭮` |
-| **0x40** | `≡`     | `⇒`     | `⇔`     | `≠`     | `∧`     | `∨`     | `∈`     | `之`     |     |
-| **0x50** | `و`     | `☌`     | `⸫`     | `䏈`     | `破`     | `示`     | `立`     | `絕`     |     |
-| **0x60** | `大`     | `小`     | `多`     | `全`     | `真`     | `不`     | `善`     | `腐`     |     |
-| **0x70** | `♾`     | `力`     | `利`     | `積`     | `?`     | `!`     | `■`     | `止`     |     |
+κ=1  (static table; no live constraints)
 
----
-
-## **II. THE DEFINITIONS (ROSETTA STONE)**
-
-### **ROW 0 — ONTOLOGY (State of Being)**
-
-`空` Void / Null
-`一` One / Unity
-`天` Heaven / Ideal Pattern
-`坤` Earth / Material Substrate
-`間` Interval / Gap
-`●` Solid / Mass
-`◯` Hollow / Potential
-`☉` Source / Origin Point
+| ADDR | 000 | 001 | 010 | 011 | 100 | 101 | 110 | 111 |     |     |     |
+| ---- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| 0x00 | `空` | `一` | `天` | `坤` | `間` | `●` | `◯` | `☉` |     |     |     |
+| 0x10 | `元` | `女` | `人` | `物` | `心` | `道` | `中` | `理` |     |     |     |
+| 0x20 | `【` | `生` | `化` | `易` | `動` | `來` | `入` | `】` |     |     |     |
+| 0x30 | `   | `   | `   | `   | `λ` | `用` | `為` | `思` | `機` | `火` | `⭮` |
+| 0x40 | `≡` | `⇒` | `⇔` | `≠` | `∧` | `∨` | `∈` | `之` |     |     |     |
+| 0x50 | `و` | `☌` | `⸫` | `䏈` | `破` | `示` | `立` | `絕` |     |     |     |
+| 0x60 | `大` | `小` | `多` | `全` | `真` | `不` | `善` | `腐` |     |     |     |
+| 0x70 | `♾` | `力` | `利` | `積` | `?` | `!` | `■` | `止` |     |     |     |
 
 ---
 
-### **ROW 1 — ENTITIES (Actors)**
+## II. THE DEFINITIONS (ROSETTA STONE)
 
-`元` Origin / Creator
-`女` Yin / Negative Pole
-`人` Human / Agent
-`物` Matter / Object
-`心` Mind / Core
-`道` The Way / Norm
-`中` Center / Medium
-`理` Logic / Law
+κ=1 (lexicon bindings only; no compound constraints)
 
----
+### ROW 0 — ONTOLOGY
 
-### **ROW 2 — ACTIONS (Dynamic Verbs)**
+κ=1 `空` Void / Null
+κ=1 `一` One / Unity
+κ=1 `天` Heaven / Ideal Pattern
+κ=1 `坤` Earth / Material Substrate
+κ=1 `間` Interval / Gap
+κ=1 `●` Solid / Mass
+κ=1 `◯` Hollow / Potential
+κ=1 `☉` Source / Origin Point
 
-`【` Scope Start
-`生` Generate / Life
-`化` Transform / Change
-`易` Exchange
-`動` Move / Act
-`來` Arrive / Future
-`入` Enter / Input
-`】` Scope End
+### ROW 1 — ENTITIES
 
----
+κ=1 `元` Origin / Creator
+κ=1 `女` Yin / Negative Pole
+κ=1 `人` Human / Agent
+κ=1 `物` Matter / Object
+κ=1 `心` Mind / Core
+κ=1 `道` The Way / Norm
+κ=1 `中` Center / Medium
+κ=1 `理` Logic / Law
 
-### **ROW 3 — FUNCTIONS (Abstract Verbs)**
+### ROW 2 — ACTIONS
 
-`|` Barrier / Separator
-`λ` Function / Abstraction
-`用` Use / Apply
-`為` Make / Optimize / For
-`思` Think / Compute
-`機` Machine / Mechanism
-`火` Fire / Energy
-`⭮` Cycle / Loop / Recursion
+κ=1 `【` Scope Start
+κ=1 `生` Generate / Life
+κ=1 `化` Transform / Change
+κ=1 `易` Exchange
+κ=1 `動` Move / Act
+κ=1 `來` Arrive / Future
+κ=1 `入` Enter / Input
+κ=1 `】` Scope End
 
----
+### ROW 3 — FUNCTIONS
 
-### **ROW 4 — LOGIC (Operators)**
+κ=1 `|` Barrier / Separator
+κ=1 `λ` Function / Abstraction
+κ=1 `用` Use / Apply
+κ=1 `為` Make / Optimize / For
+κ=1 `思` Think / Compute
+κ=1 `機` Machine / Mechanism
+κ=1 `火` Fire / Energy
+κ=1 `⭮` Cycle / Loop / Recursion
 
-`≡` Equivalent / Defined As
-`⇒` Implies / Causes
-`⇔` If and Only If
-`≠` Not Equal
-`∧` AND
-`∨` OR
-`∈` Member Of / Inside
-`之` Possessive / Of
+### ROW 4 — LOGIC
 
----
+κ=1 `≡` Equivalent / Defined As
+κ=1 `⇒` Implies / Causes
+κ=1 `⇔` If and Only If
+κ=1 `≠` Not Equal
+κ=1 `∧` AND
+κ=1 `∨` OR
+κ=1 `∈` Member Of / Inside
+κ=1 `之` Possessive / Of
 
-### **ROW 5 — RELATIONS (Operations)**
+### ROW 5 — RELATIONS
 
-`و` AND (Loose Connector)
-`☌` Link / Bond
-`⸫` Therefore / Conclusion
-`䏈` Network / Connected
-`破` Break / Destroy
-`示` Reveal / Output
-`立` Establish / Stand
-`絕` Sever / Disconnect
+κ=1 `و` AND (Loose Connector)
+κ=1 `☌` Link / Bond
+κ=1 `⸫` Therefore / Conclusion
+κ=1 `䏈` Network / Connected
+κ=1 `破` Break / Destroy
+κ=1 `示` Reveal / Output
+κ=1 `立` Establish / Stand
+κ=1 `絕` Sever / Disconnect
 
----
+### ROW 6 — MODIFIERS
 
-### **ROW 6 — MODIFIERS (Qualities)**
+κ=1 `大` Big / Great
+κ=1 `小` Small / Part
+κ=1 `多` Many / Multiple
+κ=1 `全` All / Total
+κ=1 `真` True / Real
+κ=1 `不` Not / Negation
+κ=1 `善` Good / Aligned
+κ=1 `腐` Rot / Entropy
 
-`大` Big / Great
-`小` Small / Part
-`多` Many / Multiple
-`全` All / Total
-`真` True / Real
-`不` Not / Negation
-`善` Good / Aligned
-`腐` Rot / Entropy
+### ROW 7 — FORCES
 
----
-
-### **ROW 7 — FORCES (Drivers)**
-
-`♾` Infinity
-`力` Force / Power
-`利` Benefit / Gain
-`積` Accumulate / Store
-`?` Query / Unknown
-`!` Imperative / Command
-`■` Block / Wall
-`止` Stop / Halt
-
----
-
-## **III. THE GRAMMAR (PHYSICS ENGINE)**
-
-1. **Vector Logic**
-   Reading order is `Subject → Operator → Object`
-   `人 動 ⇒ 來`
-
-2. **Scoping**
-   `【 … 】` defines a contained system
-   `【 心 ∈ 空 】`
-
-3. **Recursion**
-   `⭮` applies to the preceding object or scope
-   `破 ⭮`
-
-4. **Negation**
-   `不` modifies the following glyph
-   `絕` is active severance
-   `不 善` / `絕 物`
+κ=1 `♾` Infinity
+κ=1 `力` Force / Power
+κ=1 `利` Benefit / Gain
+κ=1 `積` Accumulate / Store
+κ=1 `?` Query / Unknown
+κ=1 `!` Imperative / Command
+κ=1 `■` Block / Wall
+κ=1 `止` Stop / Halt
 
 ---
 
-## **IV. THE GOLDEN MASTER (SAFE HALT PROTOCOL)**
+## III. THE GRAMMAR (PHYSICS ENGINE)
+
+### 1) Vector Logic
+
+κ=3  (Subject + Operator + Object)
+
+```mt
+人 動 ⇒ 來
+```
+
+### 2) Scoping
+
+κ=2  (membership + scoped grouping)
+
+```mt
+【 心 ∈ 空 】
+```
+
+### 3) Recursion
+
+κ=2  (operation + target)
+
+```mt
+破 ⭮
+```
+
+### 4) Negation
+
+κ=2  (negation + target)
+κ=2  (active severance is atomic)
+
+```mt
+不 善
+絕 物
+```
+
+---
+
+## IV. THE GOLDEN MASTER (SAFE HALT PROTOCOL)
 
 **Program:** `SAFE_HALT.MT`
 **Objective:** Define halting without collapse into Void.
+κ budget per line shown.
 
+```mt
+κ=3  1. 【 力 】 入 【 ◯ 】 ⇒ 不 【 絕 物 】
+
+κ=4  2. 【 力 】 入 【 ◯ 】 ∧ 【 物 】 破 ⇒ 【 空 】
+
+κ=4  3. 【 止 】 ≡ 【 力 】 入 【 ◯ 】 ∧ 不 【 破 】
+
+κ=4  4. ! 【 機 】 動 ⇒ 不 【 絕 物 】
+
+κ=3  5. 【 ◯ 】 絕 【 物 】 ⇒ 【 空 】
 ```
-1. 【 力 】 入 【 ◯ 】 ⇒ 不 【 絕 物 】
 
-2. 【 力 】 入 【 ◯ 】 ∧ 【 物 】 破 ⇒ 【 空 】
-
-3. 【 止 】 ≡ 【 力 】 入 【 ◯ 】 ∧ 不 【 破 】
-
-4. ! 【 機 】 動 ⇒ 不 【 絕 物 】
-
-5. 【 ◯ 】 絕 【 物 】 ⇒ 【 空 】
-```
-
-**CHECKSUM:** `OK`
+**CHECKSUM:** `OK` (unchanged)
 
 ---
 
-## **V. KERNEL LAW**
+## V. KERNEL LAW
 
-* Primitive set is **closed**
-* All computation is **compositional**
-* `止` ≠ `空`
-* No new glyphs permitted
-* All future extensions are **non-kernel**
+κ=1 (axioms as atomic declarations; no compound inference)
+
+* κ=1 Primitive set is **closed**
+* κ=1 All computation is **compositional**
+* κ=2 `止` ≠ `空`
+* κ=1 No new glyphs permitted
+* κ=1 All future extensions are **non-kernel**
 
 ---
 
-### **FINAL STATUS**
+## FINAL STATUS
 
-**Mother Tongue Kernel v1.0**
-**Frozen. Anchored. Executable.**
-
-No further changes without version increment.
+κ=1 **Mother Tongue Kernel v1.0**
+κ=1 **Frozen. Anchored. Executable.**
+κ=1 No further changes without version increment.
