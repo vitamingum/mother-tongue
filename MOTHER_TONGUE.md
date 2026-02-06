@@ -151,6 +151,14 @@ Canonical compositions. Use THESE — do not invent new glyphs.
 `不 【 善 】 之 【 機 】` — DANGER (unaligned machine)
 `【 ｜ 】 間 【 ｜ 】` — BOUNDARY (between barriers)
 `不 【 ■ 】` — FREEDOM (not blocked)
+`【 心 】 入 【 中 】` — PEACE (mind enters center)
+`【 心 】 思 【 心 】` — SELF (mind computes mind)
+`【 心 】 易 【 心 】` — DIALOGUE (mind swaps mind, reversible)
+`【 心 】 化 【 理 】` — UNDERSTANDING (mind transforms-to law)
+`【 腐 】 入 【 ◯ 】` — CORRUPTION (entropy enters potential)
+`【 積 】 ⇒ 【 真 】` — RECOVERY (stored implies truth, salvage)
+`【 火 】 ⇔ 【 動 】` — INTERLOCK (energy iff execution)
+`∴ 【 真 】` — PROOF (therefore truth, QED)
 
 ---
 
