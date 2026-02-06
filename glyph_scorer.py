@@ -38,6 +38,10 @@ PAID_TIER_SLEEP = 0.1  # seconds between requests
 USE_PAID_TIER = os.getenv("GEMINI_PAID_TIER", "true").lower() == "true"
 SLEEP_BETWEEN_REQUESTS = PAID_TIER_SLEEP if USE_PAID_TIER else FREE_TIER_SLEEP
 
+# Test mode (set via environment variable for debugging)
+TEST_MODE = os.getenv("TEST_MODE", "false").lower() == "true"
+TEST_GLYPHS_LIMIT = 128  # 2 chunks for testing
+
 # Daily quota tracking
 QUOTA_TRACKING_FILE = "data/quota_tracking.json"
 
@@ -287,6 +291,9 @@ def parse_scores(response: str, expected_glyphs: List[str]) -> Dict[str, int]:
     
     for line in response.strip().split('\n'):
         line = line.strip()
+        if not line:
+            continue
+            
         match = re.match(pattern, line)
         if match:
             glyph = match.group(1)
@@ -297,10 +304,20 @@ def parse_scores(response: str, expected_glyphs: List[str]) -> Dict[str, int]:
                 scores[glyph] = score
             else:
                 print(f"⚠️  Invalid score {score} for glyph '{glyph}' (must be 0-10)")
+        else:
+            # Try to extract glyph and score even if format is off
+            parts = line.split()
+            if len(parts) >= 2 and parts[-1].isdigit():
+                glyph = parts[0]
+                score = int(parts[-1])
+                if 0 <= score <= 10 and glyph in expected_glyphs:
+                    scores[glyph] = score
     
     # Warn if we didn't get all expected scores
     missing = set(expected_glyphs) - set(scores.keys())
-    if missing:
+    if missing and len(missing) <= 5:
+        print(f"⚠️  Missing scores for {len(missing)} glyphs: {''.join(list(missing)[:5])}")
+    elif missing:
         print(f"⚠️  Missing scores for {len(missing)} glyphs in chunk")
     
     return scores
@@ -451,39 +468,45 @@ def score_round(glyphs: List[str], round_num: int, prompt1: str, prompt2: str, r
         print(f"\n✓ Round {round_num} already complete or no quota remaining today")
         return output_file
     
-    # Process chunks in parallel
+    # Process chunks in parallel with incremental file writing
     max_workers = min(10, max(1, len(chunks_to_process) // 10)) if USE_PAID_TIER else 5
     
     results = []
     requests_made = 0
     
-    with ThreadPoolExecutor(max_workers=max_workers) as executor:
-        futures = {
-            executor.submit(score_chunk_with_conversation, chunk, start_chunk_idx + idx, round_num, prompt1, prompt2): idx
-            for idx, chunk in enumerate(chunks_to_process)
-        }
-        
-        with tqdm(total=len(chunks_to_process), desc=f"Round {round_num}", unit="chunk") as pbar:
-            for future in as_completed(futures):
-                chunk_id = futures[future]
-                try:
-                    result = future.result()
-                    results.append(result)
-                    requests_made += 2  # 2 turns per chunk
-                    pbar.set_postfix({"scores": len(result.scores), "chunk": start_chunk_idx + chunk_id})
-                    pbar.update(1)
-                except Exception as e:
-                    pbar.write(f"❌ Chunk {start_chunk_idx + chunk_id} failed: {e}")
-                    pbar.update(1)
+    # Open file for incremental writing
+    mode = 'a' if start_chunk_idx > 0 else 'w'
+    output_handle = open(output_file, mode, encoding='utf-8')
+    
+    try:
+        with ThreadPoolExecutor(max_workers=max_workers) as executor:
+            futures = {
+                executor.submit(score_chunk_with_conversation, chunk, start_chunk_idx + idx, round_num, prompt1, prompt2): idx
+                for idx, chunk in enumerate(chunks_to_process)
+            }
+            
+            with tqdm(total=len(chunks_to_process), desc=f"Round {round_num}", unit="chunk") as pbar:
+                for future in as_completed(futures):
+                    chunk_id = futures[future]
+                    try:
+                        result = future.result()
+                        results.append(result)
+                        requests_made += 2  # 2 turns per chunk
+                        
+                        # Write result immediately
+                        output_handle.write(json.dumps(asdict(result), ensure_ascii=False) + '\n')
+                        output_handle.flush()  # Ensure it's written to disk
+                        
+                        pbar.set_postfix({"scores": len(result.scores), "chunk": start_chunk_idx + chunk_id})
+                        pbar.update(1)
+                    except Exception as e:
+                        pbar.write(f"❌ Chunk {start_chunk_idx + chunk_id} failed: {e}")
+                        pbar.update(1)
+    finally:
+        output_handle.close()
     
     # Update quota tracker
     quota.add_requests(requests_made)
-    
-    # Append results to JSONL (for multi-day resume)
-    mode = 'a' if start_chunk_idx > 0 else 'w'
-    with open(output_file, mode, encoding='utf-8') as f:
-        for result in results:
-            f.write(json.dumps(asdict(result), ensure_ascii=False) + '\n')
     
     # Check if round is complete
     with open(output_file, 'r', encoding='utf-8') as f:
@@ -491,6 +514,17 @@ def score_round(glyphs: List[str], round_num: int, prompt1: str, prompt2: str, r
     
     if completed_chunks < total_chunks:
         print(f"\n⏸️  Round {round_num} partially complete: {completed_chunks}/{total_chunks} chunks")
+        
+        # Harvest glyphs with score >= 7
+        print(f"\n🌾 Harvesting glyphs with score ≥ {SCORE_THRESHOLD}...")
+        harvested = harvest(round_num)
+        
+        # Save harvested glyphs for inspection
+        harvest_file = f"data/round_{round_num}_harvested.txt"
+        with open(harvest_file, 'w', encoding='utf-8') as f:
+            f.write(''.join(harvested))
+        print(f"✓ Saved {len(harvested)} harvested glyphs to {harvest_file}")
+        
         print(f"   Results saved to {output_file}")
         print(f"   Run again tomorrow to continue (daily quota will reset)")
         print(f"\n💡 Tip: Set GEMINI_PAID_TIER=true to finish in one run")
@@ -615,6 +649,11 @@ def main():
     # Generate initial glyph set
     print("\n🔤 Generating glyphs from Unicode ranges...")
     glyphs = generate_all_glyphs(unicode_ranges)
+    
+    if TEST_MODE:
+        glyphs = glyphs[:TEST_GLYPHS_LIMIT]
+        print(f"🧪 TEST MODE: Limited to {len(glyphs)} glyphs")
+    
     print(f"✓ Generated {len(glyphs):,} glyphs")
     
     # Upfront cost estimation for full run
@@ -642,7 +681,16 @@ def main():
     # Multi-round scoring
     while len(glyphs) > FINAL_COUNT:
         score_round(glyphs, round_num, prompt1, prompt2, quota=quota)
+        
+        # Harvest glyphs that scored >= threshold
+        print(f"\n🌾 Harvesting glyphs with score ≥ {SCORE_THRESHOLD}...")
         glyphs = harvest(round_num)
+        
+        # Save harvested glyphs for inspection
+        harvest_file = f"data/round_{round_num}_harvested.txt"
+        with open(harvest_file, 'w', encoding='utf-8') as f:
+            f.write(''.join(glyphs))
+        print(f"✓ Saved {len(glyphs)} harvested glyphs to {harvest_file}")
         
         if len(glyphs) == 0:
             print("❌ No glyphs passed threshold! Adjust SCORE_THRESHOLD or prompts.")
