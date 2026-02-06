@@ -185,3 +185,4 @@ Line 5: Potential severed from Object collapses to Void.
 8. `為` is strictly binary: `X 為 Y` = X optimized toward Y. Never unary. Never a loose preposition.
 9. `之` does not chain. `A 之 B` is atomic. For nesting, scope first: `【 A 之 B 】 之 C`.
 10. `破 ⭮` breaks the innermost enclosing `⭮`. No long-range break.
+11. `全` binds to the nearest enclosing `【 】`. Unscoped `全` is global.
