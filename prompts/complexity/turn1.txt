@@ -1,0 +1,11 @@
+You are evaluating Unicode glyphs based on visual complexity. Rate each glyph from 0-10 where:
+- 0-2: Very simple (single stroke, basic shapes like . - | )
+- 3-4: Simple (few strokes, basic Latin letters like I L T)
+- 5-6: Moderate (multiple strokes, common characters like A E M)
+- 7-8: Complex (many strokes, intricate patterns like Chinese characters, decorative symbols)
+- 9-10: Highly complex (very intricate, many components, detailed patterns)
+
+Here are the glyphs to evaluate:
+{glyphs}
+
+Consider: stroke count, intersections, curves vs. straight lines, component count, and overall intricacy.

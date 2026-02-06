@@ -18,18 +18,27 @@ Multi-round Unicode glyph scoring system using Google Gemini API.
 
 2. **Configure API key**:
    ```bash
-   # Set environment variable
    $env:GEMINI_API_KEY="your_api_key_here"
    ```
 
-3. **Configure prompts** in `prompts/` directory:
-   - Edit `prompts/turn1.txt` - First turn prompt (must include `{glyphs}` placeholder)
-   - Edit `prompts/turn2.txt` - Second turn prompt requesting format: `<glyph> <score>`
-   - Edit `prompts/unicode_ranges.json` - Unicode ranges as JSON array: `[[start, end], ...]`
+3. **Configure Unicode ranges**:
+   - Edit `prompts/unicode_ranges.json` - Format: `[[start, end], ...]`
+   - Example: `[[0, 25600], [0x4E00, 0x9FFF]]`
+
+4. **Choose a scoring strategy** (or create your own):
+   - `complexity` - Scores based on visual complexity and stroke count
+   - `aesthetic` - Scores based on visual beauty and elegance
+   - `uniqueness` - Scores based on distinctiveness and rarity
 
 ## Usage
 
 ```bash
+# Run with a specific strategy
+python glyph_scorer.py complexity
+python glyph_scorer.py aesthetic
+python glyph_scorer.py uniqueness
+
+# Or use default (complexity)
 python glyph_scorer.py
 ```
 
@@ -45,12 +54,32 @@ The script will:
 
 ## Features
 
+- **Multiple scoring strategies**: Choose between complexity, aesthetic, or uniqueness scoring
 - **Configuration validation**: Checks prompts, ranges, and API key before starting
 - **Cost estimation**: Shows estimated API cost and time before each round
 - **Checkpoint/resume**: Automatically resumes from existing rounds if interrupted
 - **Progress tracking**: Real-time progress bars with tqdm
 - **Rate limit handling**: Warns when exceeding free tier limits, exponential backoff on 429 errors
-- **Prompt files**: Clean separation of prompts from code
+- **Modular prompts**: Easy to create custom strategies by adding new prompt directories
+
+## Scoring Strategies
+
+### Complexity (`prompts/complexity/`)
+Scores glyphs 0-10 based on visual complexity, stroke count, and intricacy. Higher scores for characters with many strokes and complex patterns.
+
+### Aesthetic (`prompts/aesthetic/`)
+Scores glyphs 0-10 based on visual beauty, balance, and elegance. Higher scores for visually pleasing and well-proportioned characters.
+
+### Uniqueness (`prompts/uniqueness/`)
+Scores glyphs 0-10 based on distinctiveness and rarity. Higher scores for unusual, memorable, or uncommon characters.
+
+## Creating Custom Strategies
+
+1. Create a new directory: `prompts/your_strategy/`
+2. Add `turn1.txt` with first turn prompt (include `{glyphs}` placeholder)
+3. Add `turn2.txt` with second turn prompt (request format: `<glyph> <score>`)
+4. Update `AVAILABLE_STRATEGIES` list in `glyph_scorer.py`
+5. Run: `python glyph_scorer.py your_strategy`
 
 Edit constants in `glyph_scorer.py`:
 

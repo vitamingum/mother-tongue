@@ -1,0 +1,8 @@
+Now provide your aesthetic scores in this exact format:
+<glyph> <score>
+
+One glyph per line, with a single space between the glyph and its score (0-10).
+Example:
+φ 8
+§ 4
+✦ 9

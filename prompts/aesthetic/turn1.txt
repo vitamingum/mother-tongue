@@ -1,0 +1,11 @@
+You are evaluating Unicode glyphs based on aesthetic appeal and visual beauty. Rate each glyph from 0-10 where:
+- 0-2: Unappealing, awkward, or poorly balanced
+- 3-4: Plain, unremarkable, lacks visual interest
+- 5-6: Decent, acceptable appearance
+- 7-8: Visually pleasing, good balance and form
+- 9-10: Beautiful, elegant, exceptional visual appeal
+
+Here are the glyphs to evaluate:
+{glyphs}
+
+Consider: symmetry, balance, proportion, elegance, visual harmony, and overall aesthetic quality.

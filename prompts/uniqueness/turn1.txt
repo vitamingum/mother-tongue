@@ -1,0 +1,11 @@
+You are evaluating Unicode glyphs based on uniqueness and distinctiveness. Rate each glyph from 0-10 where:
+- 0-2: Extremely common, basic punctuation or simple Latin letters
+- 3-4: Common, frequently seen characters
+- 5-6: Somewhat distinctive, recognizable but not rare
+- 7-8: Unique, uncommon shapes or patterns
+- 9-10: Highly distinctive, rare, unusual, or memorable appearance
+
+Here are the glyphs to evaluate:
+{glyphs}
+
+Consider: rarity, distinctiveness, memorability, unusual features, and how much it stands out from typical characters.

@@ -4,6 +4,7 @@ Uses 2-turn conversations to score glyphs, filtering top performers across round
 """
 
 import os
+import sys
 import json
 import re
 import time
@@ -35,10 +36,12 @@ FREE_TIER_RPD = 1500  # requests per day
 SLEEP_BETWEEN_REQUESTS = 4  # seconds (for free tier)
 PAID_TIER_SLEEP = 0.1  # seconds (if using paid tier)
 
+# Available prompt strategies
+AVAILABLE_STRATEGIES = ["complexity", "aesthetic", "uniqueness"]
+DEFAULT_STRATEGY = "complexity"
+
 # Prompts loaded from files
 PROMPT_DIR = Path("prompts")
-PROMPT1_FILE = PROMPT_DIR / "turn1.txt"
-PROMPT2_FILE = PROMPT_DIR / "turn2.txt"
 RANGES_FILE = PROMPT_DIR / "unicode_ranges.json"
 
 
@@ -46,24 +49,33 @@ RANGES_FILE = PROMPT_DIR / "unicode_ranges.json"
 # CONFIGURATION LOADERS
 # ============================================================================
 
-def load_prompts() -> Tuple[str, str]:
-    """Load prompts from files."""
-    if not PROMPT1_FILE.exists():
+def load_prompts(strategy: str = DEFAULT_STRATEGY) -> Tuple[str, str]:
+    """Load prompts from strategy directory."""
+    strategy_dir = PROMPT_DIR / strategy
+    prompt1_file = strategy_dir / "turn1.txt"
+    prompt2_file = strategy_dir / "turn2.txt"
+    
+    if not strategy_dir.exists():
         raise FileNotFoundError(
-            f"Prompt file not found: {PROMPT1_FILE}\n"
-            f"Create prompts/ directory with turn1.txt and turn2.txt\n"
+            f"Strategy directory not found: {strategy_dir}\n"
+            f"Available strategies: {', '.join(AVAILABLE_STRATEGIES)}"
+        )
+    if not prompt1_file.exists():
+        raise FileNotFoundError(
+            f"Prompt file not found: {prompt1_file}\n"
+            f"Create {strategy_dir}/turn1.txt and turn2.txt\n"
             f"turn1.txt should include {{glyphs}} placeholder"
         )
-    if not PROMPT2_FILE.exists():
-        raise FileNotFoundError(f"Prompt file not found: {PROMPT2_FILE}")
+    if not prompt2_file.exists():
+        raise FileNotFoundError(f"Prompt file not found: {prompt2_file}")
     
-    with open(PROMPT1_FILE, 'r', encoding='utf-8') as f:
+    with open(prompt1_file, 'r', encoding='utf-8') as f:
         prompt1 = f.read().strip()
-    with open(PROMPT2_FILE, 'r', encoding='utf-8') as f:
+    with open(prompt2_file, 'r', encoding='utf-8') as f:
         prompt2 = f.read().strip()
     
     if '{glyphs}' not in prompt1:
-        raise ValueError(f"{PROMPT1_FILE} must contain {{glyphs}} placeholder")
+        raise ValueError(f"{prompt1_file} must contain {{glyphs}} placeholder")
     
     return prompt1, prompt2
 
@@ -388,7 +400,7 @@ def harvest(round_num: int) -> List[str]:
 # MAIN ORCHESTRATION
 # ============================================================================
 
-def validate_configuration():
+def validate_configuration(strategy: str):
     """Validate that all required configuration is present."""
     errors = []
     
@@ -396,13 +408,23 @@ def validate_configuration():
     if not API_KEY:
         errors.append("GEMINI_API_KEY environment variable not set")
     
+    # Check strategy
+    if strategy not in AVAILABLE_STRATEGIES:
+        errors.append(
+            f"Invalid strategy '{strategy}'\n"
+            f"   Available: {', '.join(AVAILABLE_STRATEGIES)}"
+        )
+    
     # Check prompt files
+    strategy_dir = PROMPT_DIR / strategy
     if not PROMPT_DIR.exists():
         errors.append(f"Prompts directory not found: {PROMPT_DIR}")
-    if not PROMPT1_FILE.exists():
-        errors.append(f"Prompt file not found: {PROMPT1_FILE}")
-    if not PROMPT2_FILE.exists():
-        errors.append(f"Prompt file not found: {PROMPT2_FILE}")
+    if not strategy_dir.exists():
+        errors.append(f"Strategy directory not found: {strategy_dir}")
+    if not (strategy_dir / "turn1.txt").exists():
+        errors.append(f"Prompt file not found: {strategy_dir / 'turn1.txt'}")
+    if not (strategy_dir / "turn2.txt").exists():
+        errors.append(f"Prompt file not found: {strategy_dir / 'turn2.txt'}")
     
     # Check ranges file
     if not RANGES_FILE.exists():
@@ -412,12 +434,14 @@ def validate_configuration():
         print("❌ Configuration errors:")
         for error in errors:
             print(f"   • {error}")
+        print("\n📖 Available strategies:")
+        for strat in AVAILABLE_STRATEGIES:
+            print(f"   • {strat}")
         print("\n📖 Setup instructions:")
         print("   1. Set GEMINI_API_KEY environment variable")
-        print("   2. Create prompts/ directory")
-        print("   3. Create prompts/turn1.txt (include {glyphs} placeholder)")
-        print("   4. Create prompts/turn2.txt")
-        print("   5. Create prompts/unicode_ranges.json (format: [[start, end], ...])")
+        print("   2. Prompts exist at prompts/<strategy>/turn1.txt and turn2.txt")
+        print("   3. Create prompts/unicode_ranges.json (format: [[start, end], ...])")
+        print(f"   4. Run with: python glyph_scorer.py [strategy]")
         exit(1)
 
 
@@ -430,7 +454,13 @@ def main():
     4. Run rounds of scoring until we have <= FINAL_COUNT glyphs
     5. Save final glyphs
     """
+    # Parse command line arguments
+    strategy = DEFAULT_STRATEGY
+    if len(sys.argv) > 1:
+        strategy = sys.argv[1].lower()
+    
     print("🎨 Glyph Scorer - Multi-round selection system")
+    print(f"Strategy: {strategy}")
     print(f"Model: {MODEL_NAME}")
     print(f"Chunk size: {CHUNK_SIZE}")
     print(f"Score threshold: {SCORE_THRESHOLD}")
@@ -438,13 +468,13 @@ def main():
     
     # Validate configuration
     print("\n📋 Validating configuration...")
-    validate_configuration()
+    validate_configuration(strategy)
     print("✓ Configuration valid")
     
     # Load prompts and ranges
-    print("\n📝 Loading prompts...")
-    prompt1, prompt2 = load_prompts()
-    print(f"✓ Loaded prompts from {PROMPT_DIR}")
+    print(f"\n📝 Loading prompts (strategy: {strategy})...")
+    prompt1, prompt2 = load_prompts(strategy)
+    print(f"✓ Loaded prompts from {PROMPT_DIR / strategy}")
     
     print("\n🔢 Loading Unicode ranges...")
     unicode_ranges = load_unicode_ranges()
