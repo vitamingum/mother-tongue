@@ -75,6 +75,7 @@ NUCLEUS = {
     "|": {"category": "STR", "arity": "N", "direction": "S", "failure": "SAT"},     # Separator/Barrier
     "?": {"category": "STR", "arity": "1", "direction": "L", "failure": "STALL"},   # Query/Unknown
     "!": {"category": "STR", "arity": "1", "direction": "L", "failure": "BOOM"},    # Imperative/Bang
+    "間": {"category": "STR", "arity": "2", "direction": "S", "failure": "NULL"},   # Interval/Ma — the relational void
 
     # ── SCALAR PRIMES (MOD) — The Scalar Field ──
     "大": {"category": "MOD", "arity": "1", "direction": "R", "failure": "NULL"},
@@ -200,6 +201,7 @@ def is_junk(glyph: str) -> Optional[str]:
         "⍺": "APL alpha (domain-specific)",
         "◉": "redundant with 中 (center)",
         "⛬": "obscure traffic symbol",
+        "◦": "typographical bullet (replaced by 間)",
         "㓁": "CJK radical junk",
         "䄄": "obscure CJK junk",
         "䜌": "obscure CJK junk",
