@@ -277,7 +277,10 @@ def score_chunk_with_conversation(chunk: List[str], chunk_id: int, round_num: in
 def parse_scores(response: str, expected_glyphs: List[str]) -> Dict[str, int]:
     """
     Parse scores from response text.
-    Expected format: <glyph> <score> (one per line)
+    Expected formats:
+      - <glyph> <score> (simple: integers or decimals)
+      - <glyph> <m∴c> (magnitude∴confidence format)
+    Decimals are rounded to nearest int
     
     Args:
         response: API response text
@@ -287,31 +290,58 @@ def parse_scores(response: str, expected_glyphs: List[str]) -> Dict[str, int]:
         Dictionary mapping glyph to score (0-10)
     """
     scores = {}
-    pattern = r'^(.)\s+(\d+)$'
+    # Pattern for m∴c format: glyph followed by magnitude∴confidence
+    pattern_mc = r'^(.)\s+(\d+(?:\.\d+)?)\s*∴\s*(\d+(?:\.\d+)?)$'
+    # Pattern for simple format: glyph followed by score
+    pattern_simple = r'^(.)\s+(\d+(?:\.\d+)?)$'
     
     for line in response.strip().split('\n'):
         line = line.strip()
         if not line:
             continue
-            
-        match = re.match(pattern, line)
+        
+        # Try m∴c format first
+        match = re.match(pattern_mc, line)
         if match:
             glyph = match.group(1)
-            score = int(match.group(2))
+            magnitude = round(float(match.group(2)))  # m is the score (0-10)
+            # confidence = float(match.group(3))  # c is 0-1, we ignore for now
             
-            # Validate score range
+            if 0 <= magnitude <= 10:
+                scores[glyph] = magnitude
+            else:
+                print(f"⚠️  Invalid magnitude {magnitude} for glyph '{glyph}' (must be 0-10)")
+            continue
+        
+        # Try simple format
+        match = re.match(pattern_simple, line)
+        if match:
+            glyph = match.group(1)
+            score = round(float(match.group(2)))
+            
             if 0 <= score <= 10:
                 scores[glyph] = score
             else:
                 print(f"⚠️  Invalid score {score} for glyph '{glyph}' (must be 0-10)")
-        else:
-            # Try to extract glyph and score even if format is off
-            parts = line.split()
-            if len(parts) >= 2 and parts[-1].isdigit():
+            continue
+        
+        # Fallback: try to extract glyph and score/magnitude
+        parts = line.split()
+        if len(parts) >= 2:
+            try:
                 glyph = parts[0]
-                score = int(parts[-1])
-                if 0 <= score <= 10 and glyph in expected_glyphs:
-                    scores[glyph] = score
+                # Check if it has ∴ separator
+                if '∴' in parts[-1]:
+                    magnitude_str = parts[-1].split('∴')[0]
+                    magnitude = round(float(magnitude_str))
+                    if 0 <= magnitude <= 10 and glyph in expected_glyphs:
+                        scores[glyph] = magnitude
+                else:
+                    score = round(float(parts[-1]))
+                    if 0 <= score <= 10 and glyph in expected_glyphs:
+                        scores[glyph] = score
+            except (ValueError, IndexError):
+                pass  # Skip lines we can't parse
     
     # Warn if we didn't get all expected scores
     missing = set(expected_glyphs) - set(scores.keys())

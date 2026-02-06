@@ -1,0 +1,76 @@
+ROUND 2: VALENCE EXTRACTION (The Assay)
+
+You are analyzing glyphs that passed Round 1 (score ≥7).
+For each glyph, extract its REACTIVE PROPERTIES.
+
+STANDARD REAGENT KIT (5 Probes):
+⼾ (Subject) - Tests relatability
+→ (Causality) - Tests transformation capacity  
+道 (Concept) - Tests ontological depth
+≡ (Logic) - Tests identity/equivalence binding
+中 (Structure) - Tests spatial/relational capacity
+
+For EACH glyph, test against ALL 5 probes and extract:
+
+═══════════════════════════════════════════════════════
+
+1. ARITY (Valence Shell - How many bonds?)
+   0 = Nullary (Inert): 山 (Mountain), ■ (Square) - just sits there
+   1 = Unary (Modifier): 大 (Great_), 非 (Not_) - needs one host
+   2 = Transitive (Verb): 化 (Transform A→B), 生 (Generate A) - hungry for object
+   N = Variadic (Context): 和 (And), 間 (Between) - builds lists/fields
+
+2. HUNGER DIRECTION (Port Geometry - Where does it bind?)
+   L = Left-Hungry (_X): Postfix, suffixes, consumes left operand
+   R = Right-Hungry (X_): Prefix, reaches forward, demands completion
+   S = Symmetric (X_X): Infix, bridges two terms, bidirectional
+   O = Omnidirectional: Binds in any context (rare)
+
+3. FAILURE MODE (What happens when incomplete?)
+   SAT = Saturates: Reaction completes and stabilizes
+   STALL = Stalls: Hangs waiting for input (partial function)
+   BOOM = Explodes: Semantic error/contradiction
+   NULL = Degrades: Meaning dissolves without context
+
+4. REACTIVITY SCORE (1-10)
+   Test [Glyph + Probe] for each of 5 probes.
+   Average the bonding strength.
+   High = creates coherent meaning with most probes
+   Low = inert even when adjacent to reactive symbols
+
+═══════════════════════════════════════════════════════
+
+OUTPUT FORMAT (One line per glyph):
+<glyph> | Arity:<0|1|2|N> | Direction:<L|R|S|O> | Failure:<SAT|STALL|BOOM|NULL> | Reactivity:<1-10>
+
+EXAMPLES:
+化 | Arity:2 | Direction:R | Failure:STALL | Reactivity:9
+  (Transform needs object, reaches right, hangs if incomplete, highly reactive)
+
+中 | Arity:2 | Direction:S | Failure:SAT | Reactivity:10
+  (Center binds two terms symmetrically, completes gracefully, maximum reactivity)
+
+山 | Arity:0 | Direction:O | Failure:NULL | Reactivity:3
+  (Mountain is inert noun, no directional preference, meaning exists independently, low reactivity)
+
+○ | Arity:0 | Direction:O | Failure:NULL | Reactivity:1
+  (Circle is universal container, no bonds, semantically empty, nearly inert)
+
+→ | Arity:2 | Direction:R | Failure:STALL | Reactivity:9
+  (Arrow demands source and target, reaches forward, hangs without completion, very reactive)
+
+間 | Arity:N | Direction:S | Failure:NULL | Reactivity:10
+  (Between creates relational field, symmetric, graceful degradation, maximum reactivity)
+
+═══════════════════════════════════════════════════════
+
+PROBE TESTS:
+For each candidate glyph, test:
+1. ⼾ + [glyph] - Does it relate to subjects?
+2. → + [glyph] - Does it transform/cause?
+3. 道 + [glyph] - Does it deepen concepts?
+4. ≡ + [glyph] - Does it create equivalence?
+5. 中 + [glyph] - Does it structure space?
+
+Output the vector for each glyph.
+Sort by Reactivity descending.

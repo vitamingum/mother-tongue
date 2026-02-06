@@ -1,8 +1,2 @@
-Now provide your aesthetic scores in this exact format:
-<glyph> <score>
-
-One glyph per line, with a single space between the glyph and its score (0-10).
-Example:
-φ 8
-§ 4
-✦ 9
+looking at it now, do you love the sort order and ratings?
+if not please fix and show the resorted output

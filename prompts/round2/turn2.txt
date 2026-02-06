@@ -1,0 +1,20 @@
+Output the classification vector for every glyph. Strict format, one line per glyph:
+
+<glyph> | C:<CAT> | A:<ARITY> | D:<DIR> | F:<FAIL>
+
+Where:
+  CAT   = SUB | PRO | REL | MOD | STR
+  ARITY = 0 | 1 | 2 | N
+  DIR   = L | R | S | O
+  FAIL  = SAT | STALL | BOOM | NULL
+
+SORTING: Group by Category (SUB → PRO → REL → MOD → STR).
+
+EVERY input glyph must appear EXACTLY once. No extras. No omissions. No prose. No headers.
+
+Examples:
+物 | C:SUB | A:0 | D:O | F:SAT
+化 | C:PRO | A:2 | D:R | F:STALL
+⇒ | C:REL | A:2 | D:S | F:BOOM
+大 | C:MOD | A:1 | D:R | F:NULL
+中 | C:STR | A:2 | D:S | F:SAT

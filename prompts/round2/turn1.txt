@@ -1,0 +1,42 @@
+SEMANTIC ASSAY — VALENCE EXTRACTION
+
+You are classifying glyphs that survived Round 1 mining (score ≥ 7 from 105,000 Unicode candidates). Each is a confirmed high-density semantic symbol.
+
+Your task: determine the REACTIVE PROPERTIES of each glyph for assembly into a 64-symbol computable language.
+
+CLASSIFICATION SCHEMA:
+
+▸ CATEGORY — Role in a semantic equation:
+  SUB = Substance (Ontological anchor: 物 Matter, 空 Void, 道 Way, 天 Heaven)
+  PRO = Process   (Transformation engine: 化 Transform, 生 Generate, 流 Flow)
+  REL = Relation  (Logic connective: ⇒ Implies, ≡ Equivalent, ∧ And)
+  MOD = Modifier  (Quality/state changer: 大 Great, 真 True, 善 Good, 新 New)
+  STR = Structure (Spatial/relational frame: 中 Center, 間 Between, 内 Inside)
+
+▸ ARITY — How many arguments does it bind?
+  0 = Nullary  — Self-contained constant. Needs nothing.
+  1 = Unary    — Modifies one operand. (大_, 非_, ¬_)
+  2 = Binary   — Bridges two operands. (_化_, _⇒_, _生_)
+  N = Variadic  — Collects a list or field. (_和_和_, _間_)
+
+▸ DIRECTION — Where are the open ports?
+  L = Left-hungry  — Consumes leftward (suffix-like)
+  R = Right-hungry  — Reaches rightward (prefix-like)
+  S = Symmetric     — Bridges both sides (infix)
+  O = Omnidirectional — Self-contained, binds in any position
+
+▸ FAILURE — What happens when a required port is unfilled?
+  SAT   = Saturates  — Graceful completion, meaning holds
+  STALL = Stalls     — Hangs incomplete, a partial function
+  BOOM  = Explodes   — Contradiction, semantic error
+  NULL  = Degrades   — Meaning dissolves, becomes inert
+
+CRITICAL DISTINCTIONS:
+- A "hungry" verb like 化 (Transform) that STALLS without an object is MORE VALUABLE than an inert noun that just SAT-urates. Hunger = valence = bonding potential.
+- Symbols with Arity 0 and Failure SAT are anchors. They ground equations.
+- Symbols with Arity 2 and Failure STALL are engines. They drive computation.
+- Both are essential. Classify what IS, not what's "better."
+
+Analyze each glyph's chemical properties — what it demands, where it connects, what breaks it:
+
+{glyphs}

@@ -1,11 +1,17 @@
-You are evaluating Unicode glyphs based on visual complexity. Rate each glyph from 0-10 where:
-- 0-2: Very simple (single stroke, basic shapes like . - | )
-- 3-4: Simple (few strokes, basic Latin letters like I L T)
-- 5-6: Moderate (multiple strokes, common characters like A E M)
-- 7-8: Complex (many strokes, intricate patterns like Chinese characters, decorative symbols)
-- 9-10: Highly complex (very intricate, many components, detailed patterns)
+m∴c — magnitude∴confidence. Dual coordinate for claim weight and certainty. Example: c=.98∴m=.95
 
-Here are the glyphs to evaluate:
+Rate glyphs by Binding Density: symbols that are both conceptually irreducible (atoms) AND relationally active (create fields between terms). High scores for glyphs with intrinsic semantic mass that bind other concepts. Operators that ARE concepts themselves. Prepositions with weight.
+
+Rules:
+- Many glyphs should score 0–3.
+- Only a small number should exceed 7.
+- Do not explain your scores, but be prepared to explain ranking 
+
+Sort Desc
+
+Output format (one line per glyph):
+<glyph> <m∴c>
+
+Glyphs:
 {glyphs}
 
-Consider: stroke count, intersections, curves vs. straight lines, component count, and overall intricacy.

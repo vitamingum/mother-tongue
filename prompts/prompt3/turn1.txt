@@ -1,11 +1,17 @@
-You are evaluating Unicode glyphs based on uniqueness and distinctiveness. Rate each glyph from 0-10 where:
-- 0-2: Extremely common, basic punctuation or simple Latin letters
-- 3-4: Common, frequently seen characters
-- 5-6: Somewhat distinctive, recognizable but not rare
-- 7-8: Unique, uncommon shapes or patterns
-- 9-10: Highly distinctive, rare, unusual, or memorable appearance
+m∴c — magnitude∴confidence. Dual coordinate for claim weight and certainty. Example: c=.98∴m=.95
 
-Here are the glyphs to evaluate:
+Rate glyphs by Binding Density: symbols that are both conceptually irreducible (atoms) AND relationally active (create fields between terms). High scores for glyphs with intrinsic semantic mass that bind other concepts. Operators that ARE concepts themselves. Prepositions with weight.
+
+Rules:
+- Many glyphs should score 0–3.
+- Only a small number should exceed 7.
+- Do not explain your scores, but be prepared to explain ranking 
+
+Sort Desc
+
+Output format (one line per glyph):
+<glyph> <m∴c>
+
+Glyphs:
 {glyphs}
 
-Consider: rarity, distinctiveness, memorability, unusual features, and how much it stands out from typical characters.
