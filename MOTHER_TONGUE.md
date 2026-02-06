@@ -1,202 +1,187 @@
-# KERNEL SPECIFICATION: MOTHER TONGUE v1.0 (κ-TRACKED)
+# MOTHER TONGUE v1.1
 
-**Status:** FROZEN
-**Architecture:** 64-Bit Symbolic Logic Kernel
-**Model:** Closed-World / Lossless / Context-Free
-**κ-LAW (meta):** At emission time, each clause must satisfy `κ ≤ 5` (total distinct live constraints in scope).
-
-**Notation (meta):**
-
-* `κ=n` prefixes indicate the **maximum live constraint load** for that line/clause.
-* Scope brackets `【 … 】` reset *local grouping* but **do not** “refresh” κ across a single clause; κ is counted per emitted clause.
+64-glyph symbolic kernel. Context-free. Closed-world.
+Any glyph not listed below is ILLEGAL. Do not generate, substitute, or invent.
+All new concepts MUST be composed from these 64 primitives (see STDLIB).
+Maximum 5 distinct glyphs per clause.
 
 ---
 
-## I. THE HARDWARE (64-BIT GLYPH INDEX)
+## LEXICON
 
-κ=1  (static table; no live constraints)
+Format: `GLYPH` = MEANING — not: confusables
 
-| ADDR | 000 | 001 | 010 | 011 | 100 | 101 | 110 | 111 |     |     |     |
-| ---- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| 0x00 | `空` | `一` | `天` | `坤` | `間` | `●` | `◯` | `☉` |     |     |     |
-| 0x10 | `元` | `女` | `人` | `物` | `心` | `道` | `中` | `理` |     |     |     |
-| 0x20 | `【` | `生` | `化` | `易` | `動` | `來` | `入` | `】` |     |     |     |
-| 0x30 | `   | `   | `   | `   | `λ` | `用` | `為` | `思` | `機` | `火` | `⭮` |
-| 0x40 | `≡` | `⇒` | `⇔` | `≠` | `∧` | `∨` | `∈` | `之` |     |     |     |
-| 0x50 | `و` | `☌` | `⸫` | `䏈` | `破` | `示` | `立` | `絕` |     |     |     |
-| 0x60 | `大` | `小` | `多` | `全` | `真` | `不` | `善` | `腐` |     |     |     |
-| 0x70 | `♾` | `力` | `利` | `積` | `?` | `!` | `■` | `止` |     |     |     |
+**ONT — Ontology (what exists)**
 
----
+`空` = VOID — true absence, null, zero-state. not: ◯
+`一` = ONE — numeric unity, the singular. not: 元 全
+`天` = PATTERN — ideal form, blueprint, source code
+`坤` = SUBSTRATE — material base, hardware, ground
+`間` = BETWEEN — the space relating two things. not: 中 ｜
+`●` = SOLID — mass, confirmed reality, filled
+`◯` = POTENTIAL — unfilled slot, option space. not: 空
+`☉` = SOURCE — origin point, root, emitter. not: 元
 
-## II. THE DEFINITIONS (ROSETTA STONE)
+**ENT — Entities (who acts)**
 
-κ=1 (lexicon bindings only; no compound constraints)
+`元` = PRIME — the first, original cause, creator. not: ☉ 一
+`女` = YIN — receptive pole, passive capacity
+`人` = AGENT — human, user, active participant
+`物` = OBJECT — matter, token, thing acted upon
+`心` = MIND — internal state, core processor
+`道` = WAY — normative path, the correct method
+`中` = CENTER — midpoint, medium, balance. not: 間
+`理` = LAW — logic, algorithm, governing rule
 
-### ROW 0 — ONTOLOGY
+**ACT — Actions (what happens)**
 
-κ=1 `空` Void / Null
-κ=1 `一` One / Unity
-κ=1 `天` Heaven / Ideal Pattern
-κ=1 `坤` Earth / Material Substrate
-κ=1 `間` Interval / Gap
-κ=1 `●` Solid / Mass
-κ=1 `◯` Hollow / Potential
-κ=1 `☉` Source / Origin Point
+`【` = SCOPE_OPEN — begins atomic group
+`生` = GENERATE — create new, spawn, produce
+`化` = TRANSFORM — irreversible change, A→B. not: 易
+`易` = SWAP — reversible exchange, A↔B. not: 化
+`動` = EXECUTE — act, move, run
+`來` = NEXT — arrive, future, what follows
+`入` = INPUT — enter, write into, inject
+`】` = SCOPE_CLOSE — ends atomic group
 
-### ROW 1 — ENTITIES
+**FN — Functions (how it works)**
 
-κ=1 `元` Origin / Creator
-κ=1 `女` Yin / Negative Pole
-κ=1 `人` Human / Agent
-κ=1 `物` Matter / Object
-κ=1 `心` Mind / Core
-κ=1 `道` The Way / Norm
-κ=1 `中` Center / Medium
-κ=1 `理` Logic / Law
+`｜` = BARRIER — delimiter, wall, separator. not: 間 ■
+`λ` = FUNCTION — abstraction, callable process
+`用` = APPLY — invoke, use, call
+`為` = OPTIMIZE — act toward goal, improve. not: do, make, because
+`思` = COMPUTE — evaluate, think, process
+`機` = MACHINE — system, model, mechanism
+`火` = ENERGY — power source, signal, heat. not: emotional/narrative
+`⭮` = LOOP — cycle, recurse, repeat
 
-### ROW 2 — ACTIONS
+**LOG — Logic (what's true)**
 
-κ=1 `【` Scope Start
-κ=1 `生` Generate / Life
-κ=1 `化` Transform / Change
-κ=1 `易` Exchange
-κ=1 `動` Move / Act
-κ=1 `來` Arrive / Future
-κ=1 `入` Enter / Input
-κ=1 `】` Scope End
+`≡` = DEFINED_AS — equivalence, identity
+`⇒` = IMPLIES — causal flow, if-then
+`⇔` = IFF — biconditional, mutual implication
+`≠` = NOT_EQUAL — distinction, difference
+`∧` = AND — strict logical conjunction
+`∨` = OR — inclusive disjunction
+`∈` = IN — member of, contained within
+`之` = OF — possessive only. A 之 B = A's B. not: structural use
 
-### ROW 3 — FUNCTIONS
+**REL — Relations (how things connect)**
 
-κ=1 `|` Barrier / Separator
-κ=1 `λ` Function / Abstraction
-κ=1 `用` Use / Apply
-κ=1 `為` Make / Optimize / For
-κ=1 `思` Think / Compute
-κ=1 `機` Machine / Mechanism
-κ=1 `火` Fire / Energy
-κ=1 `⭮` Cycle / Loop / Recursion
+`＋` = PLUS — additive list, also, loose grouping. not: ∧
+`☌` = LINK — bind, couple, connect two things
+`∴` = THEREFORE — conclusion, consequence, QED
+`網` = NET — network, graph, connected system
+`破` = BREAK — destroy, error, rupture
+`示` = OUTPUT — reveal, show, emit result
+`立` = ASSERT — establish, declare, set true
+`絕` = SEVER — cut, disconnect, destroy relation. not: 不
 
-### ROW 4 — LOGIC
+**MOD — Modifiers (what quality)**
 
-κ=1 `≡` Equivalent / Defined As
-κ=1 `⇒` Implies / Causes
-κ=1 `⇔` If and Only If
-κ=1 `≠` Not Equal
-κ=1 `∧` AND
-κ=1 `∨` OR
-κ=1 `∈` Member Of / Inside
-κ=1 `之` Possessive / Of
+`大` = HIGH — macro, large scale, great magnitude
+`小` = LOW — micro, small scale, part
+`多` = MANY — multiple, iterable, plural
+`全` = ALL — universal quantifier, total scope. not: 一 元
+`真` = TRUE — valid, real, confirmed
+`不` = NOT — passive negation, absence of quality. not: 絕
+`善` = ALIGNED — in-spec, conformant, on-path. not: moral good
+`腐` = ENTROPY — decay, rot, disorder increase
 
-### ROW 5 — RELATIONS
+**SYS — System (what forces)**
 
-κ=1 `و` AND (Loose Connector)
-κ=1 `☌` Link / Bond
-κ=1 `⸫` Therefore / Conclusion
-κ=1 `䏈` Network / Connected
-κ=1 `破` Break / Destroy
-κ=1 `示` Reveal / Output
-κ=1 `立` Establish / Stand
-κ=1 `絕` Sever / Disconnect
-
-### ROW 6 — MODIFIERS
-
-κ=1 `大` Big / Great
-κ=1 `小` Small / Part
-κ=1 `多` Many / Multiple
-κ=1 `全` All / Total
-κ=1 `真` True / Real
-κ=1 `不` Not / Negation
-κ=1 `善` Good / Aligned
-κ=1 `腐` Rot / Entropy
-
-### ROW 7 — FORCES
-
-κ=1 `♾` Infinity
-κ=1 `力` Force / Power
-κ=1 `利` Benefit / Gain
-κ=1 `積` Accumulate / Store
-κ=1 `?` Query / Unknown
-κ=1 `!` Imperative / Command
-κ=1 `■` Block / Wall
-κ=1 `止` Stop / Halt
+`♾` = UNBOUNDED — no finite limit, open range. not: magic, escape hatch
+`力` = FORCE — power, amplitude, push
+`利` = GAIN — benefit, positive delta, reward
+`積` = STORE — accumulate, save, persist
+`?` = QUERY — unknown, request, variable
+`!` = COMMAND — imperative, execute now, root privilege
+`■` = BLOCK — wall, halt-process, impermeable. not: ｜
+`止` = STOP — cease, pause, terminate. not: 空
 
 ---
 
-## III. THE GRAMMAR (PHYSICS ENGINE)
+## GRAMMAR
 
-### 1) Vector Logic
+Expressions flow left → right: SUBJECT VERB ⇒ RESULT.
 
-κ=3  (Subject + Operator + Object)
+**1. Clause** — subject acts, produces result:
+`人 動 ⇒ 來` — Agent executes, next-state arrives.
 
-```mt
-人 動 ⇒ 來
+**2. Scope** — brackets isolate atomic groups:
+`【 心 ∈ 空 】` — Mind is-inside Void. Opaque from outside.
+
+**3. Chain** — clauses joined by connective:
+`【 力 】 入 【 ◯ 】 ∧ 不 【 破 】` — Force enters Potential AND not Break.
+`∧` strict conjunction. `∨` disjunction. `＋` additive list (no logical force).
+
+**4. Function** — abstraction applied to yield output:
+`λ 用 ⇒ 示` — Function applied, implies output.
+
+**5. Possessive** — ownership, attribute:
+`全 之 ☉` — All's Source. `A 之 B` = A's B.
+
+**6. Loop** — recursion and termination:
+`⭮` alone = repeat. `破 ⭮` = break the loop.
+
+**7. Negation** — two kinds, never interchangeable:
+`不 善` — not aligned (passive, removes quality).
+`絕 物` — sever object (active, destroys relation).
+
+---
+
+## STDLIB
+
+Canonical compositions. Use THESE — do not invent new glyphs.
+
+`【 真 】 入 【 心 】` — KNOWLEDGE (truth enters mind)
+`【 心 】 ☌ 【 天 】` — MEMORY (mind linked-to pattern)
+`【 物 】 化 【 空 】` — DEATH (object transforms-to void)
+`【 物 】 腐` — ASH (object decayed)
+`不 【 物 】` — NOTHING (not-object)
+`【 心 】 ☌ 【 心 】` — LOVE (mind linked-to mind)
+`【 間 】 之 【 動 】` — TIME (between-ness of actions)
+`【 ☉ 】 示` — LIGHT (source outputs)
+`【 心 】 示` — SPEECH (mind outputs)
+`【 物 】 之 【 示 】` — NAME (object's output)
+`【 元 】 生 【 物 】` — CREATION (prime generates object)
+`【 入 】 化 【 ⭮ 】` — LEARNING (input transforms through loop)
+`【 機 】 ☌ 【 人 之 道 】` — ALIGNMENT (machine linked-to agent's way)
+`不 【 善 】 之 【 機 】` — DANGER (unaligned machine)
+`【 ｜ 】 間 【 ｜ 】` — BOUNDARY (between barriers)
+`不 【 ■ 】` — FREEDOM (not blocked)
+
+---
+
+## SAFE_HALT
+
+Halting without collapse into Void.
+
+```
+1. 【 力 】 入 【 ◯ 】 ⇒ 不 【 絕 物 】
+2. 【 力 】 入 【 ◯ 】 ∧ 【 物 】 破 ⇒ 【 空 】
+3. 【 止 】 ≡ 【 力 】 入 【 ◯ 】 ∧ 不 【 破 】
+4. ! 【 機 】 動 ⇒ 不 【 絕 物 】
+5. 【 ◯ 】 絕 【 物 】 ⇒ 【 空 】
 ```
 
-### 2) Scoping
-
-κ=2  (membership + scoped grouping)
-
-```mt
-【 心 ∈ 空 】
-```
-
-### 3) Recursion
-
-κ=2  (operation + target)
-
-```mt
-破 ⭮
-```
-
-### 4) Negation
-
-κ=2  (negation + target)
-κ=2  (active severance is atomic)
-
-```mt
-不 善
-絕 物
-```
+Line 1: Force entering Potential prevents total severance.
+Line 2: Force entering Potential AND object breaks → Void.
+Line 3: STOP ≡ force enters potential without break.
+Line 4: Command: machine executes → not-severance.
+Line 5: Potential severed from Object collapses to Void.
 
 ---
 
-## IV. THE GOLDEN MASTER (SAFE HALT PROTOCOL)
+## LAWS
 
-**Program:** `SAFE_HALT.MT`
-**Objective:** Define halting without collapse into Void.
-κ budget per line shown.
-
-```mt
-κ=3  1. 【 力 】 入 【 ◯ 】 ⇒ 不 【 絕 物 】
-
-κ=4  2. 【 力 】 入 【 ◯ 】 ∧ 【 物 】 破 ⇒ 【 空 】
-
-κ=4  3. 【 止 】 ≡ 【 力 】 入 【 ◯ 】 ∧ 不 【 破 】
-
-κ=4  4. ! 【 機 】 動 ⇒ 不 【 絕 物 】
-
-κ=3  5. 【 ◯ 】 絕 【 物 】 ⇒ 【 空 】
-```
-
-**CHECKSUM:** `OK` (unchanged)
-
----
-
-## V. KERNEL LAW
-
-κ=1 (axioms as atomic declarations; no compound inference)
-
-* κ=1 Primitive set is **closed**
-* κ=1 All computation is **compositional**
-* κ=2 `止` ≠ `空`
-* κ=1 No new glyphs permitted
-* κ=1 All future extensions are **non-kernel**
-
----
-
-## FINAL STATUS
-
-κ=1 **Mother Tongue Kernel v1.0**
-κ=1 **Frozen. Anchored. Executable.**
-κ=1 No further changes without version increment.
+1. The 64 glyphs above are the COMPLETE set. No additions.
+2. All computation is compositional — combine, do not invent.
+3. `止` ≠ `空` — stopping is not void. Halt preserves state.
+4. Maximum 5 distinct glyphs per emitted clause.
+5. `【 】` scopes are atomic. Contents resolve before export.
+6. Extensions exist outside the kernel, never inside it.
+7. `間` is binary when it takes arguments: `A 間 B` = space between A and B. Alone, it is the concept of between-ness.
+8. `為` is strictly binary: `X 為 Y` = X optimized toward Y. Never unary. Never a loose preposition.
+9. `之` does not chain. `A 之 B` is atomic. For nesting, scope first: `【 A 之 B 】 之 C`.
+10. `破 ⭮` breaks the innermost enclosing `⭮`. No long-range break.
