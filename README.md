@@ -24,20 +24,21 @@ Multi-round Unicode glyph scoring system using Google Gemini API.
    $env:GEMINI_API_KEY="your_api_key_here"
    ```
 
-3. **Choose tier mode**:
+3. **Tier mode** (PAID TIER is default):
    
-   **FREE TIER** (default) - 1500 requests/day:
+   **PAID TIER** (default) - unlimited requests:
+   - R1 completes in ~3.3 hours
+   - Cost: ~$6.56 for full run
+   - Processes everything in one session
+   - No configuration needed
+   
+   **FREE TIER** - 1500 requests/day (opt-in):
+   ```bash
+   $env:GEMINI_PAID_TIER="false"
+   ```
    - R1 will take ~3 days (auto-batches and resumes)
    - No cost
    - Run script once per day
-   
-   **PAID TIER** - unlimited requests:
-   ```bash
-   $env:GEMINI_PAID_TIER="true"
-   ```
-   - R1 completes in ~3 hours
-   - Cost: ~$6.56 for full run
-   - Processes everything in one session
 
 4. **Unicode ranges are pre-configured** with 105k glyphs covering:
    - Mathematical operators & symbols
@@ -49,20 +50,20 @@ Multi-round Unicode glyph scoring system using Google Gemini API.
    - Emoji & symbols
    - Egyptian hieroglyphs & Cuneiform
 
-5. **Choose a scoring strategy**:
-   - `complexity` - Visual complexity and stroke count
-   - `aesthetic` - Beauty, balance, and elegance  
-   - `uniqueness` - Distinctiveness and rarity
+5. **Prompts are organized** in three strategy folders:
+   - `prompt1` - First scoring strategy
+   - `prompt2` - Second scoring strategy  
+   - `prompt3` - Third scoring strategy
 
 ## Usage
 
 ```bash
-# Run with a specific strategy
-python glyph_scorer.py complexity
-python glyph_scorer.py aesthetic
-python glyph_scorer.py uniqueness
+# Run with a specific prompt strategy
+python glyph_scorer.py prompt1
+python glyph_scorer.py prompt2
+python glyph_scorer.py prompt3
 
-# Or use default (complexity)
+# Or use default (prompt1)
 python glyph_scorer.py
 ```
 
@@ -95,7 +96,7 @@ Edit constants in `glyph_scorer.py`:
 - **Multi-day batching**: Free tier auto-splits work across days with perfect resume
 - **Quota tracking**: Automatic daily quota management in `data/quota_tracking.json`
 - **Paid tier mode**: Fast single-session processing via environment variable
-- **Multiple strategies**: Choose complexity, aesthetic, or uniqueness scoring
+- **Multiple prompts**: Choose between prompt1, prompt2, or prompt3
 - **Configuration validation**: Checks prompts, ranges, and API key before starting
 - **Cost estimation**: Shows estimated API cost and time before each round
 - **Checkpoint/resume**: Automatically resumes from existing rounds if interrupted  
@@ -103,18 +104,18 @@ Edit constants in `glyph_scorer.py`:
 - **Rate limit handling**: Exponential backoff on 429 errors
 - **Modular prompts**: Easy to create custom strategies
 
-## Scoring Strategies
+## Prompt Strategies
 
-### Complexity (`prompts/complexity/`)
-Scores glyphs 0-10 based on visual complexity, stroke count, and intricacy. Higher scores for characters with many strokes and complex patterns.
+### Prompt 1 (`prompts/prompt1/`)
+Visual complexity scoring: stroke count, intricacy, and pattern complexity.
 
-### Aesthetic (`prompts/aesthetic/`)
-Scores glyphs 0-10 based on visual beauty, balance, and elegance. Higher scores for visually pleasing and well-proportioned characters.
+### Prompt 2 (`prompts/prompt2/`)
+Aesthetic scoring: visual beauty, balance, and elegance.
 
-### Uniqueness (`prompts/uniqueness/`)
-Scores glyphs 0-10 based on distinctiveness and rarity. Higher scores for unusual, memorable, or uncommon characters.
+### Prompt 3 (`prompts/prompt3/`)
+Uniqueness scoring: distinctiveness, rarity, and memorability.
 
-## Creating Custom Strategies
+## Creating Custom Prompts
 
 1. Create a new directory: `prompts/your_strategy/`
 2. Add `turn1.txt` with first turn prompt (include `{glyphs}` placeholder)
@@ -140,14 +141,15 @@ The free tier automatically batches work across days:
 
 **Day 1:**
 ```bash
-python glyph_scorer.py complexity
+$env:GEMINI_PAID_TIER="false"  # Enable free tier
+python glyph_scorer.py prompt1
 # Processes 750 chunks (1500 requests)
 # Script exits with progress saved
 ```
 
 **Day 2:**
 ```bash
-python glyph_scorer.py complexity  
+python glyph_scorer.py prompt1  
 # Auto-resumes from chunk 750
 # Processes next 750 chunks
 # Script exits with progress saved
@@ -155,7 +157,7 @@ python glyph_scorer.py complexity
 
 **Day 3:**
 ```bash
-python glyph_scorer.py complexity
+python glyph_scorer.py prompt1
 # Completes remaining ~140 chunks
 # Round 1 complete!
 ```
@@ -164,17 +166,17 @@ Quota tracking is automatic via `data/quota_tracking.json`.
 
 ## Cost & Time
 
-### Free Tier (Default)
-- **Cost**: $0
-- **Time**: ~3 days for R1 (1500 req/day limit)
-- **Effort**: Run script once per day
-- **Total**: 3-4 days for complete 4-round filtering
-
-### Paid Tier (`GEMINI_PAID_TIER=true`)
+### Paid Tier (Default)
 - **Cost**: ~$6.56 for R1, ~$7 total
 - **Time**: ~3.3 hours for R1
 - **Effort**: Single continuous run
 - **Total**: 4-5 hours for complete 4-round filtering
+
+### Free Tier (opt-in with `GEMINI_PAID_TIER=false`)
+- **Cost**: $0
+- **Time**: ~3 days for R1 (1500 req/day limit)
+- **Effort**: Run script once per day
+- **Total**: 3-4 days for complete 4-round filtering
 
 ### Cost Breakdown (Paid)
 - **Model**: gemini-3-flash-preview

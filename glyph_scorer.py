@@ -36,16 +36,16 @@ FREE_TIER_RPD = 1500  # requests per day
 FREE_TIER_SLEEP = 4  # seconds between requests
 PAID_TIER_SLEEP = 0.1  # seconds between requests
 
-# Paid tier mode (set via environment variable)
-USE_PAID_TIER = os.getenv("GEMINI_PAID_TIER", "false").lower() == "true"
+# Paid tier mode (default: True for $6.56 fast processing)
+USE_PAID_TIER = os.getenv("GEMINI_PAID_TIER", "true").lower() == "true"
 SLEEP_BETWEEN_REQUESTS = PAID_TIER_SLEEP if USE_PAID_TIER else FREE_TIER_SLEEP
 
 # Daily quota tracking
 QUOTA_TRACKING_FILE = "data/quota_tracking.json"
 
 # Available prompt strategies
-AVAILABLE_STRATEGIES = ["complexity", "aesthetic", "uniqueness"]
-DEFAULT_STRATEGY = "complexity"
+AVAILABLE_STRATEGIES = ["prompt1", "prompt2", "prompt3"]
+DEFAULT_STRATEGY = "prompt1"
 
 # Prompts loaded from files
 PROMPT_DIR = Path("prompts")
