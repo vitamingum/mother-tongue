@@ -115,7 +115,7 @@ These resistance points are the most valuable output. They are theorem candidate
 
 【 坤 】 思 【 物 】
 【 善 】 之 【 物 】 ⇒ 【 積 】
-不 【 善 】 之 【 物 】 ⇒ 【 空 】
+不 【 善 】 ⇒ 【 空 】
 
 ⭮
   【 物 】 生 【 物 】
@@ -124,7 +124,7 @@ These resistance points are the most valuable output. They are theorem candidate
   不 【 積 】 ⇒ 【 空 】
 破 ⭮
 
-∴ 【 坤 】 之 【 力 】 ≡ 【 λ 】
+【 坤 之 力 】 ≡ 【 λ 】
 ∴ 【 物 】 化 ⇒ 【 天 】
 ```
 
