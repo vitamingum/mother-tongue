@@ -22,10 +22,10 @@ SCORING RUBRIC:
 
 
 OUTPUT FORMAT:
-One line per glyph: <glyph> <m∴c>
+One line per glyph: <glyph> <m|c>
 m = Interior Resonance magnitude (0-10, decimals OK)
 c = your confidence in the score (0-1)
-Example: ⧖ 8.2∴0.85
+Example: ⧖ 8.2|0.85
 
 Glyphs to Rate:
 {glyphs}

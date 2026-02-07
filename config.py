@@ -13,6 +13,14 @@ def load_env():
                     os.environ[key.strip()] = value.strip()
 
 load_env()
-API_KEY = os.environ.get("GOOGLE_API_KEY")
-if not API_KEY:
-    raise ValueError("GOOGLE_API_KEY not set. Add to .env")
+
+# Load API keys (required based on model selection)
+GOOGLE_API_KEY = os.environ.get("GOOGLE_API_KEY")
+ANTHROPIC_API_KEY = os.environ.get("ANTHROPIC_API_KEY")
+
+# Backward compatibility
+API_KEY = GOOGLE_API_KEY
+
+# Validate at least one key is present
+if not GOOGLE_API_KEY and not ANTHROPIC_API_KEY:
+    raise ValueError("Set GOOGLE_API_KEY or ANTHROPIC_API_KEY in .env")

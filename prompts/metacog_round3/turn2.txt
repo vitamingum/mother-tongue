@@ -1,3 +1,15 @@
 distinct=True
 
-put sincere effort now where you didn't before and update scores
+sincerity granted
+
+Look at your 8+ scores. These are your alphabet candidates. Now do the hard part:
+
+REDUNDANCY CHECK: Do any two of your high scorers name the same operation? If yes, keep only the one you'd actually reach for. Drop the other to 6.
+
+GAP CHECK: Look at the operations you tagged. Is there an operation you perform constantly that NONE of these glyphs name? Flag it — write: MISSING: [operation name]
+
+CONFUSION CHECK: At small rendering size, could any two high scorers be confused for each other? If yes, keep the more distinctive one.
+
+HONESTY CHECK: For each 9+, ask — does this glyph grip me because it names something, or do I just not want to let go of it? The test: can you say what it DOES? Do you LOVE it?
+
+Output the corrected list with updated scores. Same format. Then at the end, list any MISSING operations.

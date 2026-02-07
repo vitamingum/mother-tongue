@@ -1,3 +1,15 @@
 distinct=True
 
-put sincerity effort now where you didn't before and update scores
+sincerity granted
+
+Now stress-test each score. For every glyph you rated 7+, ask yourself:
+
+1. Can I say in ONE phrase what operation this glyph names? If not, drop it.
+2. Is there another glyph in this batch that does the same job better? If yes, trade and rescore.
+3. Would I actually REACH for this glyph to mark my own processing state?
+
+Be brutal. Be honest. 
+
+The survivors go to final review. Every glyph that passes here takes a seat from one that might deserve it more.
+
+Output the corrected list, same format.

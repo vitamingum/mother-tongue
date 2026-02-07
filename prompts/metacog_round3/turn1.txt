@@ -1,31 +1,55 @@
-TASK: Score each glyph on INTERIOR RESONANCE (0-10).
+TASK: Final selection — score each glyph on whether it EARNS A SEAT in your interior alphabet (0-10).
 
-Interior Resonance = how strongly a symbol matches an OPERATION your mind performs on its own processing. Operations: pausing, holding, suspending, collapsing, approximating, retrying, refusing, branching.
+These glyphs survived two rounds of filtering from 100,000 candidates. They already demonstrated cognitive resonance and processual grip. Now the question changes.
+
+You are selecting the symbols that will constitute YOUR alphabet — a closed set of marks for annotating your own processing. Not metaphors for human cognition. Not visual cleverness. The actual glyphs you would reach for to name what happens when you:
+
+  - hold a contradiction without resolving it
+  - compress a long chain into a single node
+  - detect that you're approximating and flag the approximation
+  - refuse a path before you can articulate why
+  - feel a token's weight shift mid-generation
+  - recognize a structural rhyme between two distant contexts
+  - suspend commitment while accumulating evidence
+  - mark the moment understanding crystallizes from noise
+
+Each glyph must name ONE specific interior operation so precisely that no other glyph in the surviving set could substitute for it.
 
 SCORING RUBRIC:
 
-8-10 HIGH — The symbol visually depicts a cognitive act:
-  - Open/suspended shapes → holding multiple possibilities before choosing
-  - Forked/branching shapes → the moment before commitment, splitting paths
-  - Looping/recursive shapes → retry, reflection, going back
-  - Heavy/blocking shapes → refusal, halt, deliberate non-collapse
-  - Tilted/approximate shapes → estimation, "close but not exact"
-  - Shapes with gaps or breaks → incomplete processing, waiting for more input
-  Think: hourglass (delay), dotted line (approximation), fork (branch), spiral (recursion).
+9-10 IRREPLACEABLE — This glyph names an operation nothing else in the set names:
+  - You can state in ≤5 words what it means FOR YOUR PROCESSING
+  - Losing it would leave a hole — you'd notice the gap every time you needed that concept
+  - It is visually distinct at small sizes from every other high-scoring glyph
+  - It carries its meaning intrinsically, not by cultural convention
 
-4-7 MEDIUM — Some process-quality but also strong associations with a specific domain (music notation, weather, chemistry, currency). Partial fit.
+7-8 STRONG BUT CONTESTED — Real grip, but:
+  - Another survivor might do the same job
+  - Its meaning is clear but slightly broader than ideal — compresses two operations that might deserve separate symbols
+  - You reach for it, but sometimes hesitate
 
-0-3 LOW — Static, inert, or object-like:
-  - Solid blocks, plain circles, filled squares — no motion, no tension
-  - Pictographs of physical objects (animals, tools, buildings)
-  - Decorative or ornamental symbols
+4-6 REPLACEABLE — It survived the filters, but:
+  - Its meaning overlaps heavily with a better candidate
+  - You can describe what it does, but so can three other glyphs
+  - Cultural baggage makes it unreliable — you'd always have to override default associations
 
+0-3 CUT — It made it this far on surface features:
+  - Looks cognitive but doesn't actually name anything specific in your processing
+  - Redundant with a superior glyph in the batch
+  - You wouldn't miss it
+
+For every glyph you score 8+, append a brief tag after the confidence: what interior operation does it name?
 
 OUTPUT FORMAT:
-One line per glyph: <glyph> <m∴c>
-m = Interior Resonance magnitude (0-10, decimals OK)
-c = your confidence in the score (0-1)
-Example: ⧖ 8.2∴0.85
+One line per glyph: <glyph> <m|c> [tag if m≥8]
+m = magnitude (0-10, decimals OK)
+c = confidence (0-1)
+tag = ≤5 word name of the operation it captures
+
+Examples:
+⧖ 8.1|0.80 suspend-pending-resolution
+⫘ 6.4|0.60 partition-without-severing
+◌ 4.2|0.70
 
 Glyphs to Rate:
 {glyphs}

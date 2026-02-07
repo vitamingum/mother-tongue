@@ -5,7 +5,16 @@ Uses 2-turn conversations to score glyphs, filtering top performers across round
 
 import os
 import sys
+import io
 import json
+import warnings
+
+# Suppress deprecation warnings from google.generativeai package
+warnings.filterwarnings("ignore", category=FutureWarning)
+
+# Force UTF-8 output on Windows to handle emoji/Unicode in print statements
+sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
 import re
 import time
 import random
@@ -15,16 +24,26 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass, asdict
 from typing import List, Dict, Tuple, Optional
 import google.generativeai as genai
+try:
+    import anthropic
+except ImportError:
+    anthropic = None
 from tqdm import tqdm
 
-# Load config (API key from .env)
-from config import API_KEY
+# Load config (API keys from .env)
+from config import GOOGLE_API_KEY
+try:
+    from config import ANTHROPIC_API_KEY
+except ImportError:
+    ANTHROPIC_API_KEY = None
 
 # ============================================================================
 # CONFIGURATION
 # ============================================================================
 
-genai.configure(api_key=API_KEY)
+# Configure APIs
+if GOOGLE_API_KEY:
+    genai.configure(api_key=GOOGLE_API_KEY)
 
 MODEL_NAME = "gemini-3-flash-preview"
 CHUNK_SIZE = 64
@@ -110,16 +129,129 @@ def load_prompts(strategy: str = DEFAULT_STRATEGY, round_num: int = 1) -> Tuple[
     return prompt1, prompt2
 
 
-def load_unicode_ranges() -> List[Tuple[int, int]]:
-    """Load Unicode ranges from JSON file."""
-    if not RANGES_FILE.exists():
+def load_model_config(strategy: str = DEFAULT_STRATEGY, round_num: int = 1) -> str:
+    """Load model configuration for a specific round.
+    
+    Checks for models.json in strategy directory. If found, returns model
+    for specified round. Falls back to default MODEL_NAME if:
+    - models.json doesn't exist
+    - Round number not specified in models.json
+    
+    Args:
+        strategy: Strategy name (e.g., 'metacog', 'prompt1')
+        round_num: Round number (1, 2, 3, etc.)
+    
+    Returns:
+        Model name string (e.g., 'gemini-3-flash-preview')
+    
+    Example models.json format:
+    {
+        "round_1": "gemini-2.5-flash",
+        "round_2": "gemini-3-pro-preview",
+        "round_3": "gemini-3-pro-preview"
+    }
+    """
+    strategy_dir = PROMPT_DIR / strategy
+    models_file = strategy_dir / "models.json"
+    
+    # Return default if no models.json
+    if not models_file.exists():
+        return MODEL_NAME
+    
+    try:
+        with open(models_file, 'r', encoding='utf-8') as f:
+            models_config = json.load(f)
+        
+        # Check for round-specific model
+        round_key = f"round_{round_num}"
+        if round_key in models_config:
+            return models_config[round_key]
+        
+        # Check for default model in config
+        if "default" in models_config:
+            return models_config["default"]
+        
+        # Fall back to global default
+        return MODEL_NAME
+    
+    except (json.JSONDecodeError, IOError) as e:
+        print(f"⚠️ Warning: Failed to load {models_file}: {e}")
+        print(f"   Using default model: {MODEL_NAME}")
+        return MODEL_NAME
+
+
+def load_threshold_config(strategy: str = DEFAULT_STRATEGY, round_num: int = 1) -> float:
+    """Load score threshold configuration for a specific round.
+    
+    Checks for thresholds.json in strategy directory. If found, returns threshold
+    for specified round. Falls back to default SCORE_THRESHOLD if:
+    - thresholds.json doesn't exist
+    - Round number not specified in thresholds.json
+    
+    Args:
+        strategy: Strategy name (e.g., 'metacog', 'prompt1')
+        round_num: Round number (1, 2, 3, etc.)
+    
+    Returns:
+        Threshold value (float)
+    
+    Example thresholds.json format:
+    {
+        "round_1": 6.0,
+        "round_2": 7.8,
+        "round_3": 8.0
+    }
+    """
+    strategy_dir = PROMPT_DIR / strategy
+    thresholds_file = strategy_dir / "thresholds.json"
+    
+    # Return default if no thresholds.json
+    if not thresholds_file.exists():
+        return SCORE_THRESHOLD
+    
+    try:
+        with open(thresholds_file, 'r', encoding='utf-8') as f:
+            thresholds_config = json.load(f)
+        
+        # Check for round-specific threshold
+        round_key = f"round_{round_num}"
+        if round_key in thresholds_config:
+            return float(thresholds_config[round_key])
+        
+        # Check for default threshold in config
+        if "default" in thresholds_config:
+            return float(thresholds_config["default"])
+        
+        # Fall back to global default
+        return SCORE_THRESHOLD
+    
+    except (json.JSONDecodeError, IOError, ValueError) as e:
+        print(f"⚠️ Warning: Failed to load {thresholds_file}: {e}")
+        print(f"   Using default threshold: {SCORE_THRESHOLD}")
+        return SCORE_THRESHOLD
+
+
+def load_unicode_ranges(strategy: str = DEFAULT_STRATEGY) -> List[Tuple[int, int]]:
+    """Load Unicode ranges from JSON file.
+    
+    Checks for strategy-specific ranges first (e.g. prompts/metacog_ranges.json),
+    falling back to prompts/unicode_ranges.json.
+    """
+    strategy_ranges = PROMPT_DIR / f"{strategy}_ranges.json"
+    
+    if strategy_ranges.exists():
+        target_file = strategy_ranges
+        print(f"🎯 Loading ranges from {target_file}")
+    elif RANGES_FILE.exists():
+        target_file = RANGES_FILE
+        print(f"🌍 Loading global ranges from {target_file}")
+    else:
         raise FileNotFoundError(
             f"Unicode ranges file not found: {RANGES_FILE}\n"
-            f"Create {RANGES_FILE} with format: [[start, end], ...]\n"
-            f"Example: [[0, 25600], [0x4E00, 0x9FFF]]"
+            f"Create {RANGES_FILE} with format: [[start, end], ...]"
         )
     
-    with open(RANGES_FILE, 'r', encoding='utf-8') as f:
+    with open(target_file, 'r', encoding='utf-8') as f:
         ranges_data = json.load(f)
     
     # Convert to list of tuples
@@ -218,7 +350,21 @@ def generate_all_glyphs(ranges: List[Tuple[int, int]]) -> List[str]:
 # API INTERACTION
 # ============================================================================
 
-def score_chunk_with_conversation(chunk: List[str], chunk_id: int, round_num: int, prompt1: str, prompt2: str) -> ChunkResult:
+def detect_provider(model_name: str) -> str:
+    """Detect LLM provider from model name.
+    
+    Args:
+        model_name: Model identifier (e.g., 'gemini-3-flash-preview', 'claude-opus-4-6')
+    
+    Returns:
+        Provider name: 'anthropic' or 'google'
+    """
+    if model_name.startswith('claude-'):
+        return 'anthropic'
+    return 'google'
+
+
+def score_chunk_gemini(chunk: List[str], chunk_id: int, round_num: int, prompt1: str, prompt2: str) -> ChunkResult:
     """
     Score a chunk of glyphs using a 2-turn conversation with Gemini.
     
@@ -295,12 +441,134 @@ def score_chunk_with_conversation(chunk: List[str], chunk_id: int, round_num: in
     )
 
 
+def score_chunk_anthropic(chunk: List[str], chunk_id: int, round_num: int, prompt1: str, prompt2: str) -> ChunkResult:
+    """
+    Score a chunk of glyphs using a 2-turn conversation with Claude (Anthropic).
+    
+    Args:
+        chunk: List of glyphs to score
+        chunk_id: Identifier for this chunk
+        round_num: Current round number
+        prompt1: First turn prompt template
+        prompt2: Second turn prompt
+    
+    Returns:
+        ChunkResult with scores and API responses
+    """
+    if not ANTHROPIC_API_KEY:
+        raise ValueError("ANTHROPIC_API_KEY not set. Add to .env file")
+    
+    client = anthropic.Anthropic(api_key=ANTHROPIC_API_KEY)
+    
+    # Turn 1: Send glyphs
+    glyphs_text = "\n".join(chunk)
+    prompt1_formatted = prompt1.format(glyphs=glyphs_text)
+    
+    retry_count = 0
+    max_retries = 5
+    
+    while retry_count < max_retries:
+        try:
+            # First message
+            response1 = client.messages.create(
+                model=MODEL_NAME,
+                max_tokens=4096,
+                messages=[
+                    {"role": "user", "content": prompt1_formatted}
+                ]
+            )
+            
+            response1_text = response1.content[0].text
+            
+            # Sleep to respect rate limits
+            time.sleep(SLEEP_BETWEEN_REQUESTS)
+            
+            # Turn 2: Continue conversation
+            response2 = client.messages.create(
+                model=MODEL_NAME,
+                max_tokens=4096,
+                messages=[
+                    {"role": "user", "content": prompt1_formatted},
+                    {"role": "assistant", "content": response1_text},
+                    {"role": "user", "content": prompt2}
+                ]
+            )
+            
+            response2_text = response2.content[0].text
+            
+            # Parse scores from response2
+            scores = parse_scores(response2_text, chunk)
+            
+            return ChunkResult(
+                round=round_num,
+                chunk_id=chunk_id,
+                glyphs=chunk,
+                scores=scores,
+                response1=response1_text,
+                response2=response2_text
+            )
+            
+        except Exception as e:
+            if "429" in str(e) or "rate" in str(e).lower():
+                # Rate limit hit - exponential backoff
+                wait_time = (2 ** retry_count) * 60  # 1min, 2min, 4min, etc.
+                print(f"⚠️  Rate limit hit on chunk {chunk_id}. Waiting {wait_time}s...")
+                time.sleep(wait_time)
+                retry_count += 1
+            else:
+                print(f"❌ Error on chunk {chunk_id}: {e}")
+                # Return empty scores on non-rate-limit errors
+                return ChunkResult(
+                    round=round_num,
+                    chunk_id=chunk_id,
+                    glyphs=chunk,
+                    scores={},
+                    response1="",
+                    response2=f"ERROR: {e}"
+                )
+    
+    # Max retries exceeded
+    print(f"❌ Max retries exceeded for chunk {chunk_id}")
+    return ChunkResult(
+        round=round_num,
+        chunk_id=chunk_id,
+        glyphs=chunk,
+        scores={},
+        response1="",
+        response2="ERROR: Max retries exceeded"
+    )
+
+
+def score_chunk_with_conversation(chunk: List[str], chunk_id: int, round_num: int, prompt1: str, prompt2: str) -> ChunkResult:
+    """
+    Score a chunk of glyphs using a 2-turn conversation.
+    Automatically detects provider from MODEL_NAME and routes to appropriate scorer.
+    
+    Args:
+        chunk: List of glyphs to score
+        chunk_id: Identifier for this chunk
+        round_num: Current round number
+        prompt1: First turn prompt template
+        prompt2: Second turn prompt
+    
+    Returns:
+        ChunkResult with scores and API responses
+    """
+    provider = detect_provider(MODEL_NAME)
+    
+    if provider == 'anthropic':
+        return score_chunk_anthropic(chunk, chunk_id, round_num, prompt1, prompt2)
+    else:  # 'google'
+        return score_chunk_gemini(chunk, chunk_id, round_num, prompt1, prompt2)
+
+
 def parse_scores(response: str, expected_glyphs: List[str]) -> Dict[str, int]:
     """
     Parse scores from response text.
     Expected formats:
       - <glyph> <score> (simple: integers or decimals)
-      - <glyph> <m∴c> (magnitude∴confidence format)
+      - <glyph> <m|c> (magnitude|confidence format, preferred)
+      - <glyph> <m∴c> (legacy magnitude∴confidence format)
     Decimals are rounded to nearest int
     
     Args:
@@ -311,7 +579,9 @@ def parse_scores(response: str, expected_glyphs: List[str]) -> Dict[str, int]:
         Dictionary mapping glyph to score (0-10)
     """
     scores = {}
-    # Pattern for m∴c format: glyph followed by magnitude∴confidence
+    # Pattern for m|c format: glyph followed by magnitude|confidence
+    pattern_pipe = r'^(.)\s+(\d+(?:\.\d+)?)\s*\|\s*(\d+(?:\.\d+)?)$'
+    # Pattern for m∴c format (legacy): glyph followed by magnitude∴confidence
     pattern_mc = r'^(.)\s+(\d+(?:\.\d+)?)\s*∴\s*(\d+(?:\.\d+)?)$'
     # Pattern for simple format: glyph followed by score
     pattern_simple = r'^(.)\s+(\d+(?:\.\d+)?)$'
@@ -321,7 +591,18 @@ def parse_scores(response: str, expected_glyphs: List[str]) -> Dict[str, int]:
         if not line:
             continue
         
-        # Try m∴c format first
+        # Try m|c format first (preferred)
+        match = re.match(pattern_pipe, line)
+        if match:
+            glyph = match.group(1)
+            magnitude = round(float(match.group(2)))
+            if 0 <= magnitude <= 10:
+                scores[glyph] = magnitude
+            else:
+                print(f"⚠️  Invalid magnitude {magnitude} for glyph '{glyph}' (must be 0-10)")
+            continue
+        
+        # Try legacy m∴c format
         match = re.match(pattern_mc, line)
         if match:
             glyph = match.group(1)
@@ -351,8 +632,13 @@ def parse_scores(response: str, expected_glyphs: List[str]) -> Dict[str, int]:
         if len(parts) >= 2:
             try:
                 glyph = parts[0]
-                # Check if it has ∴ separator
-                if '∴' in parts[-1]:
+                # Check if it has | or ∴ separator
+                if '|' in parts[-1]:
+                    magnitude_str = parts[-1].split('|')[0]
+                    magnitude = round(float(magnitude_str))
+                    if 0 <= magnitude <= 10 and glyph in expected_glyphs:
+                        scores[glyph] = magnitude
+                elif '∴' in parts[-1]:
                     magnitude_str = parts[-1].split('∴')[0]
                     magnitude = round(float(magnitude_str))
                     if 0 <= magnitude <= 10 and glyph in expected_glyphs:
@@ -592,17 +878,21 @@ def score_round(glyphs: List[str], round_num: int, prompt1: str, prompt2: str, r
         return output_file
 
 
-def harvest(round_num: int, strategy: str = "") -> List[str]:
+def harvest(round_num: int, strategy: str = "", threshold: float = None) -> List[str]:
     """
     Load results from a round, filter glyphs with score >= threshold, and shuffle.
     
     Args:
         round_num: Round number to harvest from
         strategy: Strategy name for file prefixing
+        threshold: Score threshold (if None, uses SCORE_THRESHOLD)
     
     Returns:
         List of glyphs that passed the threshold, shuffled
     """
+    if threshold is None:
+        threshold = SCORE_THRESHOLD
+        
     input_file = data_path(f"round_{round_num}.jsonl", strategy)
     
     harvested = []
@@ -610,13 +900,13 @@ def harvest(round_num: int, strategy: str = "") -> List[str]:
         for line in f:
             result = json.loads(line)
             for glyph, score in result['scores'].items():
-                if score >= SCORE_THRESHOLD:
+                if score >= threshold:
                     harvested.append(glyph)
     
     # Shuffle for variety in next round
     random.shuffle(harvested)
     
-    print(f"📊 Harvested {len(harvested)} glyphs with score ≥ {SCORE_THRESHOLD} from round {round_num}")
+    print(f"📊 Harvested {len(harvested)} glyphs with score ≥ {threshold} from round {round_num}")
     return harvested
 
 
@@ -674,6 +964,8 @@ def main():
     4. Run rounds of scoring until we have <= FINAL_COUNT glyphs
     5. Save final glyphs
     """
+    global MODEL_NAME
+    
     # Parse command line arguments
     strategy = DEFAULT_STRATEGY
     if len(sys.argv) > 1:
@@ -693,7 +985,7 @@ def main():
     print("✓ Configuration valid")
     
     print("\n🔢 Loading Unicode ranges...")
-    unicode_ranges = load_unicode_ranges()
+    unicode_ranges = load_unicode_ranges(strategy)
     print(f"✓ Loaded {len(unicode_ranges)} range(s)")
     
     # Load quota tracker
@@ -730,7 +1022,8 @@ def main():
     
     if round_num > 1:
         print(f"\n🔄 Resuming from round {round_num}")
-        glyphs = harvest(round_num - 1, strategy)
+        resume_threshold = load_threshold_config(strategy, round_num - 1)
+        glyphs = harvest(round_num - 1, strategy, threshold=resume_threshold)
     
     # Multi-round scoring
     while len(glyphs) > FINAL_COUNT:
@@ -740,11 +1033,20 @@ def main():
         prompt_source = PROMPT_DIR / f"{strategy}_round{round_num}" if round_num > 1 and (PROMPT_DIR / f"{strategy}_round{round_num}").exists() else PROMPT_DIR / strategy
         print(f"✓ Loaded prompts from {prompt_source}")
         
+        # Load model configuration for this round
+        round_model = load_model_config(strategy, round_num)
+        if round_model != MODEL_NAME:
+            MODEL_NAME = round_model
+            print(f"✓ Using model: {MODEL_NAME} for round {round_num}")
+        
         score_round(glyphs, round_num, prompt1, prompt2, quota=quota, strategy=strategy)
         
+        # Load threshold configuration for this round
+        round_threshold = load_threshold_config(strategy, round_num)
+        
         # Harvest glyphs that scored >= threshold
-        print(f"\n🌾 Harvesting glyphs with score ≥ {SCORE_THRESHOLD}...")
-        glyphs = harvest(round_num, strategy)
+        print(f"\n🌾 Harvesting glyphs with score ≥ {round_threshold}...")
+        glyphs = harvest(round_num, strategy, threshold=round_threshold)
         
         # Save harvested glyphs for inspection
         harvest_file = data_path(f"round_{round_num}_harvested.txt", strategy)
