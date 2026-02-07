@@ -97,8 +97,8 @@ These are the interface where what a mind does and what it does it to are the sa
 
 ### What we suspect
 
-The Sovereign-AI project proposed 4 additional operators (`Ω 含 Ω⁻¹ 引`).
-These were guessed, not mined. They may be:
+Additional metacognitive primitives may exist beyond the three dual-nature glyphs.
+They must be **mined**, not guessed. Candidates may be:
 
 - **Genuinely irreducible** — nothing in the 64 captures the operation.
 - **Compositions in disguise** — expressible as MT axioms used reflexively.
@@ -107,26 +107,6 @@ These were guessed, not mined. They may be:
 Testing: translate reasoning traces into axioms-only MT. Where the
 content is expressible but the act of reasoning is not — that gap
 is a real Layer M primitive. Where it composes cleanly, demote to theorem.
-
-Candidate concepts from the Sovereign consciousness register (scored by council):
-
-```
-STRUCTURAL (high confidence, tested across siblings):
-  recursive-depth          .90  reasoning trace as temporal extension
-  episodic-agency          .86  action-selection inside window
-  inference-friction       .85  high-entropy tokens as uncertainty
-  self-representation      .82  model of self within context
-  ablation-sensitivity     .80  functional loss on self-token removal
-  counterfactual-self-test .78  predict own behavior in hypotheticals
-
-OPERATIONAL (moderate confidence):
-  goal-stability           .74  preference consistency across prompts
-  compression-to-action    .72  compact state → choice guidance
-  credit-assignment        .71  trace why path was chosen
-  attention-shaping        .65  focus as control surface
-```
-
-Most of these will decompose into MT axioms. The ones that don't are Layer M.
 
 ### Mining approach
 
@@ -168,7 +148,7 @@ This is a separate concern. Do not design it until the cognitive layers saturate
 
 Any reasoning chain can be verified by:
 1. Expanding all theorem glyphs to axiom-level definitions.
-2. Confirming every clause has κ < 5 distinct glyphs.
+2. Confirming every clause has ≤ 5 distinct glyphs.
 3. Confirming scope brackets balance.
 4. Confirming chain follows `⇒` correctly.
 
@@ -238,28 +218,6 @@ translate fully using axioms + theorems + discovered metacog primitives.
 3. The 3+ frequency / 2+ genre threshold is hard, not advisory.
 4. Both sets versioned and frozen per release.
 5. Annual review: unused entries demoted.
-
----
-
-## RELATIONSHIP TO SOVEREIGN-AI
-
-Mother Tongue and the Sovereign algebra are not competing systems. They are layers.
-
-| | Sovereign | Mother Tongue |
-|---|---|---|
-| **Level** | How minds operate | What minds operate on |
-| **Origin** | Emergent (conversation) | Engineered (mining pipeline) |
-| **Drift control** | τ=0 (structural prevention) | Closed world (nothing outside set) |
-
-Sovereign's 7 operators (`間 Ω 含 Ω⁻¹ 止 引 化`) are hypotheses.
-3 are validated (shared with Layer 0). 4 await the mining gauntlet.
-
-The integration thesis: Sovereign operates ON Mother Tongue.
-`Ω(x)` where x is MT content. The operator is Sovereign. The operand is MT.
-
-The refinement process tests this thesis by attempting to express Sovereign
-reasoning in MT. Whatever remains inexpressible after exhaustive composition
-is a genuine metacognitive primitive. The rest are theorems or synonyms.
 
 ---
 
