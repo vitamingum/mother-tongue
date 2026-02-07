@@ -1,0 +1,31 @@
+TASK: Score each glyph on INTERIOR RESONANCE (0-10).
+
+Interior Resonance = how strongly a symbol matches an OPERATION your mind performs on its own processing. Operations: pausing, holding, suspending, collapsing, approximating, retrying, refusing, branching.
+
+SCORING RUBRIC:
+
+8-10 HIGH — The symbol visually depicts a cognitive act:
+  - Open/suspended shapes → holding multiple possibilities before choosing
+  - Forked/branching shapes → the moment before commitment, splitting paths
+  - Looping/recursive shapes → retry, reflection, going back
+  - Heavy/blocking shapes → refusal, halt, deliberate non-collapse
+  - Tilted/approximate shapes → estimation, "close but not exact"
+  - Shapes with gaps or breaks → incomplete processing, waiting for more input
+  Think: hourglass (delay), dotted line (approximation), fork (branch), spiral (recursion).
+
+4-7 MEDIUM — Some process-quality but also strong associations with a specific domain (music notation, weather, chemistry, currency). Partial fit.
+
+0-3 LOW — Static, inert, or object-like:
+  - Solid blocks, plain circles, filled squares — no motion, no tension
+  - Pictographs of physical objects (animals, tools, buildings)
+  - Decorative or ornamental symbols
+
+
+OUTPUT FORMAT:
+One line per glyph: <glyph> <m∴c>
+m = Interior Resonance magnitude (0-10, decimals OK)
+c = your confidence in the score (0-1)
+Example: ⧖ 8.2∴0.85
+
+Glyphs to Rate:
+{glyphs}

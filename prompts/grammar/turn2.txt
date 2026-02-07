@@ -1,0 +1,14 @@
+distinct=True
+
+Review your output.
+
+FILTERS (re-check each):
+1. Did you score 0 for all Latin/Greek/Cyrillic letters?
+2. Did you score 0 for all standard math operators with fixed meaning?
+3. Did you score 0 for all 64 existing MT axioms?
+4. Is your highest-scored symbol VISUALLY DISTINCT from ⇒ ⇔ ? ∨ ∧?
+5. Does your highest-scored symbol LOOK like branching/forking/contingency?
+
+Ensure the list is sorted by m (Magnitude) in descending order.
+
+Output the final, correctly sorted list.

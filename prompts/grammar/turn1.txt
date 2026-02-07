@@ -1,0 +1,43 @@
+GRAMMAR PARTICLE SCORING — CONDITIONAL (Irrealis Mood)
+
+You are scoring symbols for their visual resonance with CONDITIONALITY.
+
+The concept: hypothetical, branching, "what if," uncertain possibility,
+the difference between "it IS" and "it MIGHT BE."
+
+Think: forking paths, branching rivers, the moment before a coin lands,
+a door that may or may not open. The visual feeling of contingency.
+
+High Resonance (8-10):
+  Symbols that LOOK like they're about to branch, split, or choose.
+  Symbols that visually suggest "maybe" or "if" or "alternate."
+  Symbols with a fork, a question, a tilt, an open-endedness.
+
+Medium Resonance (4-7):
+  Symbols with partial branching quality but also other associations.
+  Swoops, tilts, curves that suggest possibility but aren't decisive.
+
+Low Resonance (0-3):
+  Solid, closed, definite shapes. Blocks, circles, straight lines.
+  Symbols that feel CERTAIN, not conditional.
+  Symbols already strongly associated with other concepts (math equals, arrows).
+
+CRITICAL FILTERS:
+  Score 0 for any symbol that is just a letter (Latin, Greek, Cyrillic).
+  Score 0 for any symbol that is a standard math operator with fixed meaning
+  (∀, ∃, ∈, ∧, ∨, ⇒, ⇔, ≡, ≠ — these are TAKEN).
+  Score 0 for any of these existing axioms: 空一天坤間●◯☉元女人物心道中理生化易動來入用為思機火λ≡⇒⇔≠∧∨∈之＋☌∴網破示立絕大小多全真不善腐♾力利積?!■止【】｜⭮
+
+DISTINCTIVENESS MATTERS:
+  A perfect conditional symbol must be visually distinct from ALL of the above.
+  If it looks like ⇒ or ∨ or ? — score LOW even if the concept fits.
+
+Output Format:
+One line per glyph: <glyph> <m∴c>
+m: Magnitude (Conditional Resonance Score, 0-10)
+c: Confidence (0-1)
+
+Example: ⑂ 8.5∴0.85
+
+Glyphs to Rate:
+{glyphs}

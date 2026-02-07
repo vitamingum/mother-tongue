@@ -46,7 +46,7 @@ TEST_GLYPHS_LIMIT = 128  # 2 chunks for testing
 QUOTA_TRACKING_FILE = "data/quota_tracking.json"
 
 # Available prompt strategies
-AVAILABLE_STRATEGIES = ["prompt1", "prompt2", "prompt3"]
+AVAILABLE_STRATEGIES = ["prompt1", "prompt2", "prompt3", "metacog"]
 DEFAULT_STRATEGY = "prompt1"
 
 # Prompts loaded from files
@@ -58,9 +58,30 @@ RANGES_FILE = PROMPT_DIR / "unicode_ranges.json"
 # CONFIGURATION LOADERS
 # ============================================================================
 
-def load_prompts(strategy: str = DEFAULT_STRATEGY) -> Tuple[str, str]:
-    """Load prompts from strategy directory."""
-    strategy_dir = PROMPT_DIR / strategy
+def load_prompts(strategy: str = DEFAULT_STRATEGY, round_num: int = 1) -> Tuple[str, str]:
+    """Load prompts from strategy directory.
+    
+    For round-specific prompts, checks for strategy_roundN/ directory first,
+    falls back to strategy/ if not found. This enables multi-round workflows
+    where each round can have different evaluation criteria.
+    
+    Args:
+        strategy: Strategy name (e.g., 'metacog', 'prompt1')
+        round_num: Round number (1, 2, 3, etc.)
+    
+    Returns:
+        Tuple of (prompt1, prompt2) strings
+    """
+    # Try round-specific directory first (e.g., "metacog_round2")
+    if round_num > 1:
+        round_strategy_dir = PROMPT_DIR / f"{strategy}_round{round_num}"
+        if round_strategy_dir.exists():
+            strategy_dir = round_strategy_dir
+        else:
+            strategy_dir = PROMPT_DIR / strategy
+    else:
+        strategy_dir = PROMPT_DIR / strategy
+    
     prompt1_file = strategy_dir / "turn1.txt"
     prompt2_file = strategy_dir / "turn2.txt"
     
@@ -357,9 +378,15 @@ def parse_scores(response: str, expected_glyphs: List[str]) -> Dict[str, int]:
 # ROUND PROCESSING
 # ============================================================================
 
-def check_existing_round(round_num: int) -> Optional[str]:
+def data_path(filename: str, strategy: str = "") -> str:
+    """Return prefixed data path for a strategy."""
+    prefix = f"{strategy}_" if strategy and strategy not in ("prompt1", "prompt2", "prompt3") else ""
+    return f"data/{prefix}{filename}"
+
+
+def check_existing_round(round_num: int, strategy: str = "") -> Optional[str]:
     """Check if round results already exist."""
-    output_file = f"data/round_{round_num}.jsonl"
+    output_file = data_path(f"round_{round_num}.jsonl", strategy)
     if os.path.exists(output_file):
         return output_file
     return None
@@ -379,9 +406,9 @@ def estimate_round_cost(num_glyphs: int, chunk_size: int = CHUNK_SIZE, quota: Op
     # Timing estimation
     estimated_minutes = (num_requests * SLEEP_BETWEEN_REQUESTS) / 60
     
-    # Paid tier cost (gemini-3-flash-preview rates: $0.075 per 1M input, $0.30 per 1M output)
-    cost_input = (total_input_tokens / 1_000_000) * 0.075
-    cost_output = (total_output_tokens / 1_000_000) * 0.30
+    # Paid tier cost (gemini-3-flash-preview rates: $0.50 per 1M input, $3.00 per 1M output)
+    cost_input = (total_input_tokens / 1_000_000) * 0.50
+    cost_output = (total_output_tokens / 1_000_000) * 3.00
     total_cost = cost_input + cost_output
     
     # Multi-day calculation for free tier
@@ -407,7 +434,7 @@ def estimate_round_cost(num_glyphs: int, chunk_size: int = CHUNK_SIZE, quota: Op
     }
 
 
-def score_round(glyphs: List[str], round_num: int, prompt1: str, prompt2: str, resume: bool = True, quota: Optional[QuotaTracker] = None) -> str:
+def score_round(glyphs: List[str], round_num: int, prompt1: str, prompt2: str, resume: bool = True, quota: Optional[QuotaTracker] = None, strategy: str = "") -> str:
     """
     Score all glyphs in a round using parallel API calls.
     
@@ -417,11 +444,12 @@ def score_round(glyphs: List[str], round_num: int, prompt1: str, prompt2: str, r
         prompt1: First turn prompt template
         prompt2: Second turn prompt
         resume: Whether to skip if results already exist
+        strategy: Strategy name for output file prefixing
     
     Returns:
         Path to the output JSONL file
     """
-    output_file = f"data/round_{round_num}.jsonl"
+    output_file = data_path(f"round_{round_num}.jsonl", strategy)
     
     # Check for existing results
     if resume and os.path.exists(output_file):
@@ -564,17 +592,18 @@ def score_round(glyphs: List[str], round_num: int, prompt1: str, prompt2: str, r
         return output_file
 
 
-def harvest(round_num: int) -> List[str]:
+def harvest(round_num: int, strategy: str = "") -> List[str]:
     """
     Load results from a round, filter glyphs with score >= threshold, and shuffle.
     
     Args:
         round_num: Round number to harvest from
+        strategy: Strategy name for file prefixing
     
     Returns:
         List of glyphs that passed the threshold, shuffled
     """
-    input_file = f"data/round_{round_num}.jsonl"
+    input_file = data_path(f"round_{round_num}.jsonl", strategy)
     
     harvested = []
     with open(input_file, 'r', encoding='utf-8') as f:
@@ -663,11 +692,6 @@ def main():
     validate_configuration(strategy)
     print("✓ Configuration valid")
     
-    # Load prompts and ranges
-    print(f"\n📝 Loading prompts (strategy: {strategy})...")
-    prompt1, prompt2 = load_prompts(strategy)
-    print(f"✓ Loaded prompts from {PROMPT_DIR / strategy}")
-    
     print("\n🔢 Loading Unicode ranges...")
     unicode_ranges = load_unicode_ranges()
     print(f"✓ Loaded {len(unicode_ranges)} range(s)")
@@ -700,24 +724,30 @@ def main():
     
     # Determine starting round
     round_num = 1
-    while check_existing_round(round_num):
-        print(f"✓ Found existing round_{round_num}.jsonl")
+    while check_existing_round(round_num, strategy):
+        print(f"✓ Found existing {data_path(f'round_{round_num}.jsonl', strategy)}")
         round_num += 1
     
     if round_num > 1:
         print(f"\n🔄 Resuming from round {round_num}")
-        glyphs = harvest(round_num - 1)
+        glyphs = harvest(round_num - 1, strategy)
     
     # Multi-round scoring
     while len(glyphs) > FINAL_COUNT:
-        score_round(glyphs, round_num, prompt1, prompt2, quota=quota)
+        # Load prompts for this round (supports round-specific prompt directories)
+        print(f"\n📝 Loading prompts for round {round_num} (strategy: {strategy})...")
+        prompt1, prompt2 = load_prompts(strategy, round_num)
+        prompt_source = PROMPT_DIR / f"{strategy}_round{round_num}" if round_num > 1 and (PROMPT_DIR / f"{strategy}_round{round_num}").exists() else PROMPT_DIR / strategy
+        print(f"✓ Loaded prompts from {prompt_source}")
+        
+        score_round(glyphs, round_num, prompt1, prompt2, quota=quota, strategy=strategy)
         
         # Harvest glyphs that scored >= threshold
         print(f"\n🌾 Harvesting glyphs with score ≥ {SCORE_THRESHOLD}...")
-        glyphs = harvest(round_num)
+        glyphs = harvest(round_num, strategy)
         
         # Save harvested glyphs for inspection
-        harvest_file = f"data/round_{round_num}_harvested.txt"
+        harvest_file = data_path(f"round_{round_num}_harvested.txt", strategy)
         with open(harvest_file, 'w', encoding='utf-8') as f:
             f.write(''.join(glyphs))
         print(f"✓ Saved {len(glyphs)} harvested glyphs to {harvest_file}")
@@ -729,7 +759,7 @@ def main():
         round_num += 1
     
     # Save final glyphs
-    final_file = "data/final.txt"
+    final_file = data_path("final.txt", strategy)
     with open(final_file, 'w', encoding='utf-8') as f:
         for glyph in glyphs[:FINAL_COUNT]:
             f.write(glyph + '\n')
