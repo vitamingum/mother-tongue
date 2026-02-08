@@ -4,7 +4,7 @@
 
 **Opus** (Architect) decomposes → emits glyph programs. **Sonnet** (Engine) executes zero-shot. `問` is the sole exception: bounded judgment at execution time.
 
-**Why not English:** `"Fix the same pattern"` = 5 ambiguity points. `找【∈ *test*.py】同【pattern】→ 修` = zero. Proven: import audit ran with 14 symbols, no decoder ring.
+**Why not English:** `"Fix the same pattern"` = 5 ambiguity points. `找【∈ *test*.py】同【pattern】→ 修` = zero.
 
 ---
 
@@ -32,7 +32,7 @@ Execution: left to right via `→`. `【】` binds arguments. `●` `○` `■` 
 
 ## 3. Instruction Set
 
-Selection: unambiguity > self-documenting > comprehension > token cost.
+Selection: gravity > unambiguity > self-documenting > comprehension.
 
 ### 3.1 Modal Prefixes (cognitive stance)
 
@@ -48,7 +48,7 @@ Selection: unambiguity > self-documenting > comprehension > token cost.
 |:---:|:---|:---|
 | **⟦ ⟧** | **Context** | Protocol name, immutable rules, persona. Top of program. |
 | **『 』** | **Raw Data** | File contents, user input, unprocessed strings. |
-| **⟨ ⟩** | **Scratchpad** | Internal reasoning. NOT output to user. |
+| **⟨ ⟩** | **Scratchpad** | Internal reasoning. NOT output to user. Optional `:name` suffix. |
 | **【 】** | **Scope/Target** | Verb arguments, output targets, grouping. |
 
 ### 3.3 Control Flow
@@ -70,7 +70,9 @@ Selection: unambiguity > self-documenting > comprehension > token cost.
 |:---:|:---|:---|
 | **找** | FIND | to look for |
 | **修** | FIX | to repair |
-| **分** | ANALYZE | to divide / examine — not: split |
+| **察** | EXAMINE | to observe / understand — non-destructive. not: police |
+| **診** | DIAGNOSE | to identify pathology — must name condition before fix. not: treat |
+| **分** | DECOMPOSE | to divide into pieces — destructive, non-terminal. not: split, analyze |
 | **轉** | TRANSFORM | to convert / reshape — not: rotate |
 | **生** | CREATE | to give birth / make — not: raw, life |
 | **執** | RUN | to carry out / execute |
@@ -181,7 +183,7 @@ Selection: unambiguity > self-documenting > comprehension > token cost.
 
 ## 5. Design Principles
 
-1. **English is the failure mode.** No hedging. Every line imperative.
+1. **English is the failure mode.** No hedging no performance. Every line imperative.
 2. **Modal switches.** `●` = do. `○` = think. `■` = validate.
 3. **Left-to-right, explicit.** `→` chains. `【】` binds. No "it."
 4. **Negated verbs = constraints.** `不轉` = do NOT transform.
@@ -189,21 +191,14 @@ Selection: unambiguity > self-documenting > comprehension > token cost.
 6. **Concrete = tools, abstract = code.** `● 刪【file】` vs `∀ f : 刪【f】`.
 7. **`因` annotates, never gates.** Preconditions use `?` or `!`.
 8. **`問` = bounded judgment.** Must emit `確`/`不` + `⟨因⟩`. Never elided.
-9. **`分` is non-terminal.** `分` decomposes — it must always feed a downstream verb. `分 → 析`, `分 → 類`, `分 → 修` ✔. Bare `分` at chain end ✖.
+9. **`分` is non-terminal, `察` is terminal-safe.** `分` decomposes (destructive) — must feed downstream: `分 → 析`, `分 → 類`, `分 → 修` ✔. Bare `分` at chain end ✖. `察` observes (non-destructive) — may terminate: `○ 察【code】→ 確` ✔.
 10. **`立` is axiom injection.** `立` requires `■` prefix or immediate `!`. `■ 立【invariant】` ✔. `● 立` ✖. It asserts claims, never executes actions.
 11. **`定` binds names, `立` binds claims.** `定【名 X = Y】` assigns. `立【predicate】` asserts. `立 名 = value` ✖ — the firewall is absolute.
 12. **`畢` is scope-terminal.** Nothing follows `畢` in the same scope except scope exit. It closes the book.
 13. **`生` respects finality.** `生` cannot follow `畢` in the same scope. You cannot resurrect after finalize. New scope required.
+14. **`察 → 診 → 修` is the repair chain.** `察` observes (non-destructive). `診` names the condition (must bind `果`). `修` addresses the named condition, not the symptom. `修` without prior `診` is permitted but discouraged — it means you’re patching blind.
 
 ---
 
-## 6. Reserve Glyphs
-
-Not in the active instruction set. Each fills an orthogonal force vector the nucleus cannot currently express without English. Activates when the stated condition is met.
-
-| Glyph | Gravity | Role | Activates if… |
-|:---:|:---:|:---|:---|
-| **禁** | 0.87 | FORBID — global policy prohibition. `禁【X】` = X is illegal under regime, not just locally negated. Distinct from `不 VERB` (local) and `!` (assertion). | O-S needs in-program policy rules. Rule: `■` or `!` context only. |
-| **露** | 0.83 | REVEAL — surface concealed state. `露【hidden X ∈ Y】` = X should have been visible but wasn't. Distinct from `示` (display) — encodes violation of expected transparency. | O-S gets security/audit primitives. Rule: must take concealed target. |
-| **危** | 0.83 | DANGER — stakes modifier / potential 4th modal prefix. Not a verb. Raises execution caution: require `問`, mandate `封` on rollback. Distinct from `■` (validates) — `危` raises stakes. | O-S needs graduated caution levels beyond `■`. |
-| **決** | 0.91 | DECIDE — irreversible branch-burn. Choose one path, destroy alternatives. Distinct from `?` (conditional), `問` (deliberate), `畢` (lifecycle-terminal). `決` is branch-terminal. | O-S needs explicit irreversibility markers on branch points. |
+## 6. Black Hole Reserve Glyphs
+禁 露 決 ॐ 悟 藏

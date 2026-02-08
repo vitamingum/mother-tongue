@@ -1,0 +1,82 @@
+# GLYPH_MINER_512 v0.3.1 Configuration
+
+# Model backend
+backend: ollama
+
+# Sampling parameters
+sampling:
+  temperature_schedule: [0.8, 0.6, 0.4]
+  top_p: 0.95
+  top_k: 50
+  repeat_penalty: 1.05
+  num_predict: 8
+
+# Stage configurations
+stages:
+  A:
+    passes: 5
+    rounds: 12000
+    keep: 10000
+    slate_size: 64
+    union_margin: 15000
+    min_seen: 8
+  
+  B:
+    passes: 4
+    rounds: 3000
+    keep: 2000
+    slate_size: 64
+    union_margin: 3000
+    min_seen: 20
+  
+  C:
+    passes: 4
+    rounds: 5000
+    keep: 512
+    slate_size: 16
+    union_margin: 800
+    min_seen: 20
+
+# Stability criteria
+stability:
+  threshold: 0.98
+  consecutive_required: 2
+
+# Unicode filtering
+unicode:
+  exclude_categories:
+    - Cc  # Control
+    - Cf  # Format
+    - Mn  # Nonspacing Mark
+    - Mc  # Spacing Mark
+    - Me  # Enclosing Mark
+    - Zs  # Space Separator
+    - Cn  # Unassigned
+  
+  exclude_ranges:
+    surrogates: [0xD800, 0xDFFF]
+    pua: [[0xE000, 0xF8FF], [0xF0000, 0xFFFFD], [0x100000, 0x10FFFD]]
+    variation_selectors: [[0xFE00, 0xFE0F], [0xE0100, 0xE01EF]]
+
+# Output
+output:
+  directory: output
+  files:
+    - final_512.txt
+    - final_512.json
+    - edges.csv
+    - stability.json
+    - log.jsonl
+
+# Checkpointing
+checkpoints:
+  enabled: true
+  directory: checkpoints
+  save_interval: 1000  # rounds
+
+# Constraints
+constraints:
+  model_output: 2  # exactly 2 glyphs
+  final_size: 512  # exactly 512 glyphs
+  deterministic: true
+  no_metadata: true  # no unicode names/blocks reach model

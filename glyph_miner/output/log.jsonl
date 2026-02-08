@@ -1,0 +1,9 @@
+{"stage": "A", "pass": 1, "rounds": 12000, "valid_selections": 3982, "pool_size": 147176, "timestamp": 1770509041.895793}
+{"stage": "A", "pass": 2, "rounds": 12000, "valid_selections": 5550, "pool_size": 25000, "timestamp": 1770512460.5718696}
+{"stage": "A", "pass": 3, "rounds": 12000, "valid_selections": 5582, "pool_size": 25000, "timestamp": 1770515937.884436}
+{"stage": "A", "pass": 4, "rounds": 12000, "valid_selections": 5538, "pool_size": 25000, "timestamp": 1770519352.327278}
+{"stage": "A", "pass": 5, "rounds": 12000, "valid_selections": 5385, "pool_size": 25000, "timestamp": 1770522761.0705333}
+{"stage": "B", "pass": 1, "rounds": 3000, "valid_selections": 1821, "pool_size": 10000, "timestamp": 1770523618.115625}
+{"stage": "B", "pass": 2, "rounds": 3000, "valid_selections": 1830, "pool_size": 5000, "timestamp": 1770524460.759102}
+{"stage": "B", "pass": 3, "rounds": 3000, "valid_selections": 1909, "pool_size": 5000, "timestamp": 1770525292.930841}
+{"stage": "B", "pass": 4, "rounds": 3000, "valid_selections": 1901, "pool_size": 5000, "timestamp": 1770526127.5174074}

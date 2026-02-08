@@ -1,0 +1,20 @@
+# Glyph Mining — Project Goals
+
+Mine Unicode to find:
+
+1. **Logic glyphs** — the least ambiguous symbols for AND, OR, NOT, IF, THEN, FOR ALL, membership, set operations. Mathematical notation is the primary vein. Selection criterion: zero semantic drift in composition.
+
+2. **Construction grammar glyphs** — mode switches, scope delimiters, sequence operators, branching, assertion. These are conventional (meaning assigned by the spec, not inherent). Selection criterion: visual distinctiveness, no collisions with layer 1 or 3.
+
+3. **Self-documenting ideographic glyphs** — verbs, nouns, quantifiers, relations. CJK is the primary vein. These must depict their operation through radical composition — the character should be a diagram of itself. Selection criterion: a model that has never seen the spec should still parse the glyph correctly from structure and training context alone.
+
+4. **Compositional unambiguity** — all glyphs must survive combination. A glyph that is clear in isolation but ambiguous in sequence with others fails. The unit of purity is the phrase, not the character. Test combinations, not individuals.
+
+## Selection hierarchy
+
+Compositional unambiguity > Self-documenting structure > Model comprehension > Token cost (tiebreaker only).
+
+## Architecture context
+
+See `MODEL_AUTOMATION_SPEC.md` for the current instruction set and grammar.
+See `found_glyphs.txt` for the raw candidate palette.

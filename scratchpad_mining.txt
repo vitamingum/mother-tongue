@@ -1,0 +1,27 @@
+⟨ GLYPH MINING SCRATCHPAD ⟩
+
+=== Round 1700/12000 Snapshot (Stage A Pass 3/5, 14% complete) ===
+
+TOP 6 GLYPHS (5 exposures, 1.000 score):
+1. 剪 (jiǎn) - cut, clip, shear — operational: SPLIT/DIVIDE
+2. 洩 (xiè) - discharge, leak, release — operational: EMIT/OUTPUT  
+3. 击 (jī) - strike, hit, attack — operational: EXECUTE/TRIGGER
+4. 咐 (fù) - command, instruct, order — operational: INVOKE/CALL
+5. 凭 (píng) - based on, rely on, proof — operational: ASSERT/VERIFY
+6. 🮪 (geometric) - shape operator — operational: TRANSFORM/SHAPE
+
+PATTERN ANALYSIS:
+- All CJK verbs strongly suggest specific actions/operations
+- Perfect alignment with prompt: "action or logical operation"
+- 3-byte UTF-8 encoding (efficient tokenization)
+- Geometric symbols scoring equally high (🮪, ✖, ✕)
+
+STABILITY NOTES:
+- Churn still high (NEW/DROPPED each 100 rounds)
+- 剪/洩/击 consistently top-3 through rounds 1400-1700
+- 46% valid parse rate (acceptable for Stage A filtering)
+- Need ~5000 more rounds for true differentiation
+
+Pool: 25000 glyphs (Stage A Pass 3 pruning)
+Model: qwen2.5-coder:14b
+Seed: 42 (deterministic)
